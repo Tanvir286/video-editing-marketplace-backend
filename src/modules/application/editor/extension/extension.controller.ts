@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Req,
+} from '@nestjs/common';
 import { ExtensionService } from './extension.service';
 import { CreateExtensionDto } from './dto/create-extension.dto';
 import { UpdateExtensionDto } from './dto/update-extension.dto';
@@ -15,12 +24,20 @@ export class ExtensionController {
   constructor(private readonly extensionService: ExtensionService) {}
 
   @Post(':jobId/create')
-  create(@Body() createExtensionDto: CreateExtensionDto, @Req() req: any, @Param('jobId') jobId: string) {
+  create(
+    @Body() createExtensionDto: CreateExtensionDto,
+    @Req() req: any,
+    @Param('jobId') jobId: string,
+  ) {
     const user_id = req.user?.userId;
-    return this.extensionService.createRequest(user_id, jobId, createExtensionDto);
+    return this.extensionService.createRequest(
+      user_id,
+      jobId,
+      createExtensionDto,
+    );
   }
 
-@Patch(':requestId/action')
+  @Patch(':requestId/action')
   async handleAction(
     @Req() req: any,
     @Param('requestId') requestId: string,

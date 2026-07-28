@@ -1,12 +1,12 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateBidDto {
-  @ApiPropertyOptional({
-    description: 'Bid amount proposed by the editor',
+  @ApiProperty({
     example: 250,
-    minimum: 1,
+    required: false,
+    description: 'Bid amount proposed by the editor',
   })
   @IsNumber()
   @IsOptional()
@@ -14,10 +14,10 @@ export class CreateBidDto {
   @Min(1)
   amount?: number;
 
-  @ApiPropertyOptional({
-    description: 'Requested delivery time in days',
+  @ApiProperty({
     example: 3,
-    minimum: 1,
+    required: false,
+    description: 'Requested delivery time in days',
   })
   @IsNumber()
   @IsOptional()
@@ -25,9 +25,10 @@ export class CreateBidDto {
   @Min(1)
   req_date?: number;
 
-  @ApiPropertyOptional({
-    description: 'Message sent with the bid',
+  @ApiProperty({
     example: 'I can complete this project within 3 days.',
+    required: false,
+    description: 'Message sent with the bid',
   })
   @IsString()
   @IsOptional()

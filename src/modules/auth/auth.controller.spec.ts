@@ -84,7 +84,7 @@ describe('AuthController', () => {
       last_name: 'Doe',
       email: 'john@example.com',
       password: 'password',
-      type: 'user',
+      type: 'CLIENT' as any,
     };
     const result = await controller.create(dto);
     expect(result.success).toBe(true);
@@ -177,7 +177,7 @@ describe('AuthController', () => {
 
   it('should generate 2FA secret', async () => {
     const result = await controller.generate2FASecret({ user: { userId: 1 } } as any);
-    expect(result.data.qrCode).toBe('base64');
+    expect((result as any).data?.qrCode).toBe('base64');
   });
 
   it('should verify 2FA token', async () => {
