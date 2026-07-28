@@ -294,6 +294,12 @@ export class SeedCommand extends CommandRunner {
       const contentLength = contentLengths[(i - 1) % contentLengths.length];
       const jobCategory = jobCategories[(i - 1) % jobCategories.length];
       const platform = platforms[(i - 1) % platforms.length];
+      const skillOptions = ['HTML', 'CSS', 'JS', 'React', 'Next', 'Node', 'Nest'];
+      const selectedSkills = [
+        skillOptions[(i - 1) % skillOptions.length],
+        skillOptions[(i + 2) % skillOptions.length],
+      ];
+      const skillText = selectedSkills.join(', ');
 
       // Jobs 1-4: PENDING (bids PENDING)
       // Jobs 5-7: IN_PROGRESS (one bid IN_PROGRESS, others PENDING)
@@ -314,6 +320,7 @@ export class SeedCommand extends CommandRunner {
           job_category: jobCategory,
           project_duration: parseFloat((3 + i).toFixed(1)),
           platform: platform,
+          skill: skillText,
           status: status,
           user_id: client.id,
         },

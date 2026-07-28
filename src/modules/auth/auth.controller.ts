@@ -36,7 +36,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { USER_TYPES } from 'src/common/swagger/swagger-auth';
 
-@ApiTags('auth')
+@ApiTags('🏳️Auth')
 @ApiExtraModels(CreateUserDto, UpdateUserDto, VerifyEmailDto)
 @Controller('auth')
 export class AuthController {

@@ -6,113 +6,19 @@ import {
 import { SojebStorage } from 'src/common/lib/Disk/SojebStorage';
 import appConfig from 'src/config/app.config';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateJobDto } from './dto/create-job.dto';
-import { UpdateJobDto } from './dto/update-job.dto';
+import { ClientCreateJobDto } from './dto/create-job.dto';
+import { ClientUpdateJobDto } from './dto/update-job.dto';
 
 @Injectable()
 export class JobsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // async createJob(
-  //   userId: string,
-  //   dto: CreateJobDto,
-  //   files: Express.Multer.File[],
-  //   jobPhoto?: Express.Multer.File,
-  // ) {
-  //   // 1. Initial Validation
-  //   if (!files?.length) {
-  //     throw new BadRequestException('At least one attachment file is required');
-  //   }
-
-  //   return this.prisma.$transaction(async (tx) => {
-  //     // ⬇️ NEW: User type check logic
-  //     const user = await tx.user.findUnique({
-  //       where: { id: userId },
-  //       select: { type: true },
-  //     });
-
-  //     if (!user || user.type !== 'CLIENT') {
-  //       throw new ForbiddenException('Only clients are allowed to create jobs');
-  //     }
-  //     // ⬆️ End of check
-
-  //     const attachmentPath = appConfig().storageUrl.attachment.endsWith('/')
-  //       ? appConfig().storageUrl.attachment
-  //       : `${appConfig().storageUrl.attachment}/`;
-
-  //     const jobPhotoPath = appConfig().storageUrl.jobPhoto.endsWith('/')
-  //       ? appConfig().storageUrl.jobPhoto
-  //       : `${appConfig().storageUrl.jobPhoto}/`;
-
-  //     // Job photo filename logic
-  //     let jobPhotoName: string | null = null;
-  //     if (jobPhoto) {
-  //       const photoExt = jobPhoto.originalname.split('.').pop();
-  //       jobPhotoName = `job-photo-${Date.now()}.${photoExt}`;
-
-  //       await SojebStorage.put(jobPhotoPath + jobPhotoName, jobPhoto.buffer);
-  //     }
-
-  //     // Attachment processing
-  //     const createdAttachments = [];
-  //     for (const file of files) {
-  //       const ext = file.originalname.split('.').pop();
-  //       const fileName = `job-attachment-${Date.now()}-${Math.random().toString(16).slice(2)}.${ext}`;
-
-  //       await SojebStorage.put(attachmentPath + fileName, file.buffer);
-
-  //       const attachment = await tx.attachment.create({
-  //         data: {
-  //           name: file.originalname,
-  //           type: file.mimetype,
-  //           size: file.size,
-  //           file: fileName,
-  //         },
-  //       });
-  //       createdAttachments.push(attachment);
-  //     }
-
-  //     // Create job
-  //     const job = await tx.jOB.create({
-  //       data: {
-  //         ...dto,
-  //         user_id: userId,
-  //         job_photo: jobPhotoName,
-  //         attachment: {
-  //           connect: createdAttachments.map((a) => ({ id: a.id })),
-  //         },
-  //       },
-  //       include: {
-  //         attachment: true,
-  //       },
-  //     });
-
-  //     return {
-  //       success: true,
-  //       message: 'Job created successfully',
-  //       data: {
-  //         ...job,
-  //         job_photo_url: job.job_photo
-  //           ? SojebStorage.url(jobPhotoPath + job.job_photo)
-  //           : null,
-  //         attachment: job.attachment.map((att) => ({
-  //           ...att,
-  //           file_url: att.file
-  //             ? SojebStorage.url(attachmentPath + att.file)
-  //             : null,
-  //         })),
-  //       },
-  //     };
-  //   });
-  // }
-
   async createJob(
     userId: string,
-    dto: CreateJobDto,
+    dto: ClientCreateJobDto,
     files: Express.Multer.File[],
     jobPhoto?: Express.Multer.File,
   ) {
-    // 1. Initial Validation
     if (!files?.length) {
       throw new BadRequestException('At least one attachment file is required');
     }
@@ -526,21 +432,7 @@ export class JobsService {
     }
   }
 
-  update(id: string, dto: UpdateJobDto) {
-    const { attachments, ...jobData } = dto;
-
-    return this.prisma.jOB.update({
-      where: { id },
-      data: {
-        ...jobData,
-        attachment: attachments
-          ? {
-              set: attachments.map((id) => ({ id })),
-            }
-          : undefined,
-      },
-    });
-  }
+  update(id: string, dto: ClientUpdateJobDto) {}
 
   softDelete(id: string) {
     return this.prisma.jOB.update({

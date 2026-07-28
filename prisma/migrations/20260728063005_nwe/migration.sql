@@ -178,14 +178,14 @@ CREATE TABLE "jobs" (
 -- CreateTable
 CREATE TABLE "bids" (
     "id" TEXT NOT NULL,
-    "amount" DOUBLE PRECISION,
-    "req_date" DOUBLE PRECISION,
-    "message" TEXT,
-    "jobId" TEXT,
-    "status" "BidStatus" NOT NULL DEFAULT 'PENDING',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
+    "amount" DOUBLE PRECISION,
+    "req_date" DOUBLE PRECISION,
+    "message" TEXT,
+    "status" "BidStatus" NOT NULL DEFAULT 'PENDING',
+    "jobId" TEXT,
     "user_id" TEXT,
 
     CONSTRAINT "bids_pkey" PRIMARY KEY ("id")
