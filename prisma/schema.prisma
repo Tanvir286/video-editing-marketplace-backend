@@ -1,0 +1,760 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * ----------------------------------------------------
+ * User & Auth & Portfolio Schema
+ * -----------------------------------------------------
+ **/
+
+model Account {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  type                String?
+  provider            String?
+  provider_account_id String?
+  refresh_token       String?
+  access_token        String?
+  expires_at          DateTime?
+  token_type          String?
+  scope               String?
+  id_token            String?
+  session_state       String?
+
+  @@unique([provider, provider_account_id])
+  @@map("accounts")
+}
+
+enum UserType {
+  ADMIN
+  CLIENT
+  EDITOR
+}
+
+model User {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+  status     Int?      @default(1) @db.SmallInt
+
+  name     String? @db.VarChar(255)
+  email    String? @unique
+  password String? @db.VarChar(255)
+
+  avatar   String?
+  bio      String? @db.Text
+  location String? @db.VarChar(255)
+  language String? @db.VarChar(100)
+
+
+  about_me String?
+
+  // billing info  
+  billing_id        String?
+  // stripe connect account 
+  stripe_connect_id String?
+  //user balance
+  balance           Decimal? @default(0.0) @db.Decimal(10, 2)
+
+  type              UserType? @default(CLIENT)
+  email_verified_at DateTime?
+
+  //-----(relation_part---------
+  protfolios protfolio[]
+  educations Education[]
+  skills     skills[]
+
+  //----------------------------------------
+  first_name    String?   @db.VarChar(255)
+  last_name     String?   @db.VarChar(255)
+  domain        String?   @unique
+  username      String?   @unique
+  phone_number  String?
+  country       String?
+  state         String?
+  city          String?
+  address       String?
+  zip_code      String?
+  gender        String?
+  date_of_birth DateTime? @db.Date
+  approved_at   DateTime?
+  availability  String?
+
+  is_two_factor_enabled Int?      @default(0)
+  two_factor_secret     String?
+  accounts              Account[]
+
+  // --- Conversation & Messaging ---
+  participants Participant[] @relation("participantUser")
+
+  receiver_notifications Notification[] @relation("receiver")
+  sender_notifications   Notification[] @relation("sender")
+
+  user_payment_methods UserPaymentMethod[]
+  user_settings        UserSetting[]
+  ucodes               Ucode[]
+  roles                Role[]
+  role_users           RoleUser[]
+  payment_transactions PaymentTransaction[]
+  jobs                 JOB[]
+  bids                 Bid[]
+  hires                Hire[]
+  extensionRequests    ExtensionRequest[]
+  deliveries           Delivery[]
+  reviews              Review[]
+
+  @@map("users")
+}
+
+model Ucode {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  status     Int?     @default(1) @db.SmallInt
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id])
+
+  token       String?
+  email       String?
+  expired_at  DateTime?
+  verified_at DateTime?
+
+  @@map("ucodes")
+}
+
+model protfolio {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+  status     Int?      @default(1) @db.SmallInt
+
+  title        String?
+  project_type String?
+  description  String?
+  thumbnail    String?
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("portfolios")
+}
+
+model Education {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+  status     Int?      @default(1) @db.SmallInt
+
+  course_name  String
+  subject      String
+  passing_year Int
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("educations")
+}
+
+model skills {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  skill_name String
+
+  user_id String 
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("skills")
+}
+
+/**
+ * ----------------------------------------------------
+ * User & Auth & Portfolio Schema
+ * -----------------------------------------------------
+ */
+
+enum ContentLength {
+  MIN_1_5    @map("1-5")
+  MIN_5_10   @map("5-10")
+  MIN_10_15  @map("10-15")
+  MIN_15_20  @map("15-20")
+  MIN_20_30  @map("20-30")
+  MIN_30_40  @map("30-40")
+  MIN_40_50  @map("40-50")
+  MIN_50_60  @map("50-60")
+  MIN_60_120 @map("60-120")
+  MIN_120    @map("120+")
+}
+
+enum JobCategory {
+  LONG_FORM_VIDEO
+  SHORTS_REELS_TIKTOKS
+  THUMBNAILS
+  ADS_UGC
+  PODCASTS
+  WEDDINGS_EVENTS
+  COLOR_AUDIO
+  CAPTIONS_SUBTITLES
+}
+
+enum Platform {
+  YOUTUBE
+  FACEBOOK
+  X
+  INSTAGRAM
+  TIKTOK
+  LINKEDIN
+  SNAPCHATS
+  PINTEREST
+  VIMEO
+  TWITCH
+  THREADS
+  OTHER
+}
+
+enum JobStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCEL
+  LATE
+}
+
+enum VideoCategory {
+  LONG_FORM
+  SHORT_FORM
+  THUMBNAIL
+  ADS_UGC
+  PODCAST
+  WEDDING_EVENT
+  COLOR_AUDIO
+  CAPTION_SUBTITLE
+}
+
+enum SoftwarePreference {
+  FINAL_CUT_PRO
+  DAVINCI_RESOLVE
+  SONY_VEGAS
+  ADOBE_PREMIERE_PRO
+  FILMORA
+  AFTER_EFFECTS
+  CAPCUT
+  ANY
+}
+
+model JOB {
+  id                String             @id @default(cuid())
+  job_title         String?
+  job_description   String? 
+  job_photo         String?
+  content_length    ContentLength
+  project_budget    Float?
+  job_category      JobCategory
+  project_duration  Float?
+  platform          Platform
+  skill             String?
+  reference         String?
+  total_payment     Float?
+  fileId            String?
+  status            JobStatus          @default(PENDING)
+  bids              Bid[]
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+  deleted_at        DateTime?
+  started_at        DateTime?
+  deadline          DateTime?
+  user_id           String?
+  user              User?              @relation(fields: [user_id], references: [id])
+  attachment        Attachment[]
+  deliveries        Delivery[]
+  extensionRequests ExtensionRequest[]
+  reviews           Review[]
+
+  @@map("jobs")
+}
+
+enum BidStatus {
+  PENDING
+  APPROVED
+  REJECT
+  IN_PROGRESS
+  CANCELLED
+  ACCEPTED
+}
+
+model Bid {
+  id       String  @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  amount   Float?
+  req_date Float?
+  message  String?
+  status BidStatus @default(PENDING)
+
+  jobId    String?
+  job    JOB?   @relation(fields: [jobId], references: [id])
+  
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id])
+
+  @@map("bids")
+}
+
+model Hire {
+  id               String        @id @default(cuid())
+  project_title    String
+  video_category   VideoCategory
+  project_photo    String?
+  video_duration   ContentLength
+  description      String
+  project_budget   Float?
+  project_duration Float?
+  total_amount     Float?
+
+  hire_profile_id String?
+
+  user_id             String
+  user                User                 @relation(fields: [user_id], references: [id])
+  status              JobStatus            @default(PENDING)
+  software_preference SoftwarePreference[]
+  attachments         Attachment[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  startedAt DateTime?
+
+  @@map("hires")
+}
+
+model Review {
+  id                    String  @id @default(cuid())
+  rating                Int
+  comment               String? @db.VarChar(300)
+  communication_quality Int?
+  on_time_delivery      Int?
+  value_for_money       Int?
+  would_recommend       Int?
+
+  attachments Attachment[]
+
+  user_id             String
+  job_id              String?
+  delivery_id         String?
+  service_provider_id String
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  user     User      @relation(fields: [user_id], references: [id])
+  job      JOB?      @relation(fields: [job_id], references: [id])
+  delivery Delivery? @relation(fields: [delivery_id], references: [id])
+
+  @@map("reviews")
+}
+
+enum DeliveryStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  REVISION_REQUESTED
+}
+
+model Delivery {
+  id          String       @id @default(uuid())
+  job_id      String?
+  user_id     String?
+  message     String?      @db.Text
+  attachments Attachment[]
+
+  extend_time   Int?
+  previous_date DateTime?
+
+  status DeliveryStatus @default(PENDING)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  job     JOB?     @relation(fields: [job_id], references: [id])
+  user    User?    @relation(fields: [user_id], references: [id])
+  reviews Review[]
+
+  @@map("deliveries")
+}
+
+enum ExtensionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ExtensionRequest {
+  id      String @id @default(uuid())
+  job_id  String
+  user_id String
+
+  message        String @db.VarChar(300)
+  extension_days Int
+
+  original_date DateTime
+
+  new_date DateTime?
+
+  status ExtensionStatus @default(PENDING)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  job  JOB?  @relation(fields: [job_id], references: [id])
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@map("extension_requests")
+}
+
+model Role {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  status Int?    @default(1) @db.SmallInt
+  title  String?
+  name   String?
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  permission_roles PermissionRole[]
+  role_users       RoleUser[]
+  permissions      Permission[]     @relation("PermissionToRole")
+
+  @@map("roles")
+}
+
+model Permission {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  status     Int?    @default(1) @db.SmallInt
+  title      String?
+  action     String?
+  subject    String?
+  conditions String?
+  fields     String?
+
+  permission_roles PermissionRole[]
+  roles            Role[]           @relation("PermissionToRole")
+
+  @@map("permissions")
+}
+
+model PermissionRole {
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  permission_id String
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  role_id String
+  role    Role   @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@id([permission_id, role_id])
+  @@map("permission_roles")
+}
+
+model RoleUser {
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  role_id String
+  role    Role   @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([role_id, user_id])
+  @@map("role_users")
+}
+
+// this table stores notification event
+model NotificationEvent {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  status Int?    @default(1) @db.SmallInt
+  type   String?
+  text   String?
+
+  notifications Notification[]
+
+  @@map("notification_events")
+}
+
+model Notification {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  read_at DateTime?
+
+  status Int? @default(1) @db.SmallInt
+
+  sender_id String?
+  sender    User?   @relation("sender", fields: [sender_id], references: [id])
+
+  receiver_id String?
+  receiver    User?   @relation("receiver", fields: [receiver_id], references: [id])
+
+  notification_event_id String?
+  notification_event    NotificationEvent? @relation(fields: [notification_event_id], references: [id])
+
+  entity_id String?
+
+  @@map("notifications")
+}
+
+model UserPaymentMethod {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id])
+
+  payment_method_id String?
+  checkout_id       String?
+
+  @@map("user_payment_methods")
+}
+
+model PaymentTransaction {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  store_id String?
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id])
+
+  order_id         String?
+  type             String?  @default("order")
+  withdraw_via     String?  @default("wallet")
+  provider         String?
+  reference_number String?
+  status           String?  @default("pending")
+  raw_status       String?
+  amount           Decimal?
+  currency         String?
+  paid_amount      Decimal?
+  paid_currency    String?
+
+  @@map("payment_transactions")
+}
+
+// ---------Start Chat schema---------
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  participant Participant[]
+  messages    Message[]
+
+  @@map("conversations")
+}
+
+// this table stores attachment of message
+model Attachment {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  name     String?
+  type     String?
+  size     Int?
+  file     String?
+  file_alt String?
+
+  messages   Message[]
+  jobs       JOB[]
+  hire       Hire?     @relation(fields: [hire_id], references: [id])
+  hire_id    String?
+  review     Review?   @relation(fields: [reviewId], references: [id])
+  reviewId   String?
+  delivery   Delivery? @relation(fields: [deliveryId], references: [id])
+  deliveryId String?
+
+  @@map("attachments")
+}
+
+model Participant {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  conversation_id String?
+  conversation    Conversation? @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  user_id String?
+  user    User?   @relation("participantUser", fields: [user_id], references: [id], onDelete: Cascade)
+
+  role      String?   @default("participant")
+  joined_at DateTime? @default(now())
+
+  @@unique([conversation_id, user_id])
+  @@map("participants")
+}
+
+model Message {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  conversation_id String?
+  conversation    Conversation? @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  sender_id    String?
+  receiver_id  String?
+  message      String?        @db.Text
+  status       MessageStatus? @default(SENT)
+  read_at      DateTime?
+  attachment   Attachment?    @relation(fields: [attachmentId], references: [id])
+  attachmentId String?
+
+  @@map("messages")
+}
+
+// ---------End Chat schema---------
+
+model Faq {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  status     Int?    @default(1) @db.SmallInt
+  sort_order Int?    @default(0)
+  question   String?
+  answer     String?
+
+  @@map("faqs")
+}
+
+model Contact {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  first_name   String?
+  last_name    String?
+  email        String?
+  phone_number String?
+  message      String?
+
+  @@map("contacts")
+}
+
+model SocialMedia {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  status     Int?    @default(1) @db.SmallInt
+  sort_order Int?    @default(0)
+  name       String?
+  url        String?
+  icon       String?
+
+  @@map("social_medias")
+}
+
+model WebsiteInfo {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  name                String?
+  phone_number        String?
+  email               String?
+  address             String?
+  logo                String?
+  favicon             String?
+  copyright           String?
+  cancellation_policy String?
+
+  @@map("website_infos")
+}
+
+model Setting {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  category      String?
+  label         String?
+  description   String?
+  key           String? @unique
+  default_value String?
+
+  user_settings UserSetting[]
+
+  @@map("settings")
+}
+
+model UserSetting {
+  id         String    @id @default(cuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id])
+
+  setting_id String?
+  setting    Setting? @relation(fields: [setting_id], references: [id])
+
+  value String?
+
+  @@map("user_settings")
+}
+
