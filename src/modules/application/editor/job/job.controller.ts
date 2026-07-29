@@ -246,53 +246,7 @@ export class JobController {
                hire request
   --------------------------------------------------*/
   
- /*--------------------------------------------------
-                    hire request
-  --------------------------------------------------*/
-  @Get('hire-request')
-  @ApiOperation({
-    summary: 'Get direct hire requests for the editor',
-    description: 'Returns a paginated list of direct hire requests/offers sent to the logged-in editor.',
-  })
-  @ApiQuery({ 
-    name: 'page', 
-    required: false, 
-    example: 1
-   })
-  @ApiQuery({ 
-    name: 'limit', 
-    required: false, 
-    example: 10 
-  })
-  @ApiOkResponse({
-    description: 'Successfully retrieved hire requests',
-    schema: {
-      example: {
-        success: true,
-        message: 'Hire requests fetched successfully',
-        pagination: { page: 1, limit: 10, total: 12, totalPages: 2 },
-        data: [
-          {
-            id: 'hire-id-123',
-            project_title: "I will craft quality backlinks for your website's SEO.",
-            project_photo: 'project.jpg',
-            project_photo_url: 'https://cdn.example.com/storage/job-photo/project.jpg',
-            project_budget: 55,
-            project_duration: 5,
-            status: 'PENDING',
-            client_name: 'John Doe'
-          }
-        ]
-      }
-    }
-  })
-  async hireRequest(
-    @Query() paginationDto: PaginationDto, 
-    @Req() req: any
-  ) {
-    const userId = req.user.userId;
-    return this.jobService.hireRequest(paginationDto, userId);
-  }
+ 
 
 
 

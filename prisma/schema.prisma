@@ -11,7 +11,7 @@ datasource db {
  * ----------------------------------------------------
  * User & Auth & Portfolio Schema
  * -----------------------------------------------------
- **/
+ */
 
 model Account {
   id         String   @id @default(cuid())
@@ -57,7 +57,6 @@ model User {
   bio      String? @db.Text
   location String? @db.VarChar(255)
   language String? @db.VarChar(100)
-
 
   about_me String?
 
@@ -178,7 +177,7 @@ model skills {
 
   skill_name String
 
-  user_id String 
+  user_id String
   user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("skills")
@@ -262,7 +261,7 @@ enum SoftwarePreference {
 model JOB {
   id                String             @id @default(cuid())
   job_title         String?
-  job_description   String? 
+  job_description   String?
   job_photo         String?
   content_length    ContentLength
   project_budget    Float?
@@ -300,7 +299,7 @@ enum BidStatus {
 }
 
 model Bid {
-  id       String  @id @default(cuid())
+  id         String    @id @default(cuid())
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
@@ -308,19 +307,32 @@ model Bid {
   amount   Float?
   req_date Float?
   message  String?
-  status BidStatus @default(PENDING)
+  status   BidStatus @default(PENDING)
 
-  jobId    String?
-  job    JOB?   @relation(fields: [jobId], references: [id])
-  
+  jobId String?
+  job   JOB?    @relation(fields: [jobId], references: [id])
+
   user_id String?
   user    User?   @relation(fields: [user_id], references: [id])
 
   @@map("bids")
 }
 
+enum HireStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  IN_PROGRESS
+  CANCELLED
+  COMPLETED
+}
+
 model Hire {
-  id               String        @id @default(cuid())
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  startedAt DateTime?
+
   project_title    String
   video_category   VideoCategory
   project_photo    String?
@@ -330,17 +342,14 @@ model Hire {
   project_duration Float?
   total_amount     Float?
 
-  hire_profile_id String?
+  hire_profile_id  String
+  status          HireStatus @default(PENDING)
 
-  user_id             String
-  user                User                 @relation(fields: [user_id], references: [id])
-  status              JobStatus            @default(PENDING)
   software_preference SoftwarePreference[]
   attachments         Attachment[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  startedAt DateTime?
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
 
   @@map("hires")
 }
@@ -757,4 +766,3 @@ model UserSetting {
 
   @@map("user_settings")
 }
-
