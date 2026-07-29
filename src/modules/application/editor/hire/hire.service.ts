@@ -3,28 +3,31 @@ import { CreateHireDto } from './dto/create-hire.dto';
 import { UpdateHireDto } from './dto/update-hire.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginationDto } from 'src/common/pagination/pagination.dto';
-import { JobStatus } from 'src/common/enums/job.enum';
+import { HireStatus } from 'prisma/generated';
 import { ImageGetUtil } from 'src/common/utils/image/image.util';
+import { HirePaginationDto } from './dto/pagination-hire.dto';
 
 @Injectable()
 export class HireService {
-
-  constructor(private readonly prisma: PrismaService){}
+  constructor(private readonly prisma: PrismaService) {}
 
   // get hire request
   async getHireRequest(
-    paginationDto: PaginationDto,
-    editorId: string
+    paginationDto: HirePaginationDto, 
+    editorId: string,
+    status?: HireStatus 
   ) {
-  
     const page = paginationDto?.page ?? 1;
     const limit = paginationDto?.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const where = {
-      status: JobStatus.PENDING,
-      hire_profile_id: editorId,  
+    const where: any = {
+      hire_profile_id: editorId,
     };
+
+    if (status) {
+      where.status = status;
+    }
 
     const [total, hireRequests] = await this.prisma.$transaction([
       this.prisma.hire.count({ where }),
@@ -41,7 +44,6 @@ export class HireService {
           project_photo: true,
           project_budget: true,
           project_duration: true,
-          total_amount: true,
           status: true,
         },
       }),
@@ -51,7 +53,6 @@ export class HireService {
       id: request.id,
       project_title: request.project_title,
       project_budget: request.project_budget,
-      total_amount: request.total_amount,
       project_duration: request.project_duration,
       status: request.status,
       project_photo: request.project_photo,
@@ -70,6 +71,4 @@ export class HireService {
       data: formatData,
     };
   }
-
- 
 }

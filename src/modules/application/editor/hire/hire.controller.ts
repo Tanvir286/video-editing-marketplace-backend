@@ -6,6 +6,8 @@ import { PaginationDto } from 'src/common/pagination/pagination.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { USER_TYPES } from 'src/common/swagger/swagger-auth';
+import { HireStatus } from 'prisma/generated';
+import { HirePaginationDto } from './dto/pagination-hire.dto';
 
 @ApiTags('🏳️Editor Hire Management')
 @ApiBearerAuth(USER_TYPES.EDITOR)
@@ -14,7 +16,6 @@ import { USER_TYPES } from 'src/common/swagger/swagger-auth';
 export class HireController {
  
   constructor(private readonly hireService: HireService) {}
-
 
   // Get Hire Request
   @Get('hire-request')
@@ -35,6 +36,12 @@ export class HireController {
     example: 10,
     description: 'Items per page',
   })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: HireStatus,
+    description: 'Filter by hire status (PENDING, ACCEPTED, REJECTED, IN_PROGRESS, CANCELLED, COMPLETED)',
+  })
   @ApiOkResponse({
     description: 'Successfully retrieved hire requests',
     schema: {
@@ -51,34 +58,26 @@ export class HireController {
           {
             id: 'hire-id-123',
             created_at: '2026-06-30T09:00:00.000Z',
-            job_title:
-              'I will do SEO backlinks with blogger outreach for high quality link building',
-            job_description:
-              'Create quality backlinks and outreach links for better ranking.',
-            total_payment: 150,
+            project_title: 'I will do SEO backlinks with blogger outreach for high quality link building',
+            project_budget: 150,
+            total_amount: 150,
             project_duration: 5,
             status: 'PENDING',
             deadline: '2026-07-05T09:00:00.000Z',
             skill: 'SEO, Backlink Outreach',
-            job_photo: 'job-photo.jpg',
-            job_photo_url:
-              'https://cdn.example.com/storage/job-photo/job-photo.jpg',
-            user_name: 'Marvin McKinney',
-            user_location: 'Pakistan',
-            user_skill: 'SEO Specialist',
+            project_photo: 'job-photo.jpg',
+            project_photo_url: 'https://cdn.example.com/storage/job-photo/job-photo.jpg',
           },
         ],
       },
     },
   })
   async getHireRequest(
-    @Query() paginationDto: PaginationDto,
-    @Req() req: any
+    @Query() paginationDto: HirePaginationDto,
+    @Query('status') status?: HireStatus,
+    @Req() req?: any
   ) {
     const editorId = req.user.userId;
-    return this.hireService.getHireRequest(paginationDto, editorId);
+    return this.hireService.getHireRequest(paginationDto, editorId, status);
   }
-
-
- 
 }

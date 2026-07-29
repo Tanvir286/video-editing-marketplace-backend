@@ -1,5 +1,5 @@
 // external imports
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as express from 'express';
@@ -89,6 +89,11 @@ async function bootstrap() {
   // swagger setup
   setupSwagger(app);
 
-  await app.listen(process.env.PORT ?? 4000, '0.0.0.0');
+  const port = process.env.PORT ?? 4000;
+  await app.listen(port, '0.0.0.0');
+
+  const logger = new Logger('Bootstrap');
+  logger.log(`🚀 Server running on: http://localhost:${port}`);
+  logger.log(`📚 Swagger documentation: http://localhost:${port}/docs`);
 }
 bootstrap();

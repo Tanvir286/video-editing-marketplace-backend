@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import {
   ContentLength,
-  JobStatus,
+  HireStatus,
   SoftwarePreference,
   VideoCategory,
 } from 'prisma/generated';
@@ -63,6 +63,6 @@ export class CreateHireDto {
   software_preference?: SoftwarePreference[];
 
   @IsOptional()
-  @IsEnum(JobStatus)
-  status?: JobStatus;
+  @IsEnum(HireStatus)
+  status?: HireStatus;
 }

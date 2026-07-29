@@ -7,23 +7,56 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   /*----------------------------------------
+              Active Jobs Count
+  ----------------------------------------*/
+  async getActiveJobsCount(userId: string) {
+    const inProgressJobsCount = await this.prisma.jOB.count({
+      where: {
+        bids: {
+          some: {
+            user_id: userId,
+            status: 'ACCEPTED',
+          },
+        },
+        status: 'IN_PROGRESS',
+      },
+    });
+
+    const inProgressHiresCount = await this.prisma.hire.count({
+      where: {
+        hire_profile_id: userId,
+        status: 'IN_PROGRESS',
+      },
+    });
+
+    const totalActiveJobs = inProgressJobsCount + inProgressHiresCount;
+
+    return {
+      success: true,
+      message: 'Active jobs count retrieved successfully',
+      data: {
+        in_progress_bidded_jobs: inProgressJobsCount,
+        in_progress_direct_hires: inProgressHiresCount,
+        total_active_jobs: totalActiveJobs,
+      },
+    };
+  }
+
+  /*----------------------------------------
                My Order List
   ----------------------------------------*/
 
   async getMyOrders(userId: string, paginationDto: PaginationDto) {
-
     const page = paginationDto?.page ?? 1;
     const limit = paginationDto?.limit ?? 10;
     const skip = (page - 1) * limit;
 
     const [hiresCount, biddedJobsCount, allHires, allBiddedJobs] =
-      
       await this.prisma.$transaction([
-      
         this.prisma.hire.count({
           where: { hire_profile_id: userId },
         }),
-       
+
         this.prisma.jOB.count({
           where: {
             bids: {
@@ -31,7 +64,7 @@ export class DashboardService {
             },
           },
         }),
-      
+
         this.prisma.hire.findMany({
           where: { hire_profile_id: userId },
           include: {
@@ -40,7 +73,7 @@ export class DashboardService {
             },
           },
         }),
-       
+
         this.prisma.jOB.findMany({
           where: {
             bids: {
@@ -111,7 +144,4 @@ export class DashboardService {
       data: finalOrders,
     };
   }
-
-
- 
 }

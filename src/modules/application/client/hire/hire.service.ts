@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { JobStatus, Prisma } from 'prisma/generated';
+import { HireStatus, Prisma } from 'prisma/generated';
 import { SojebStorage } from 'src/common/lib/Disk/SojebStorage';
 import appConfig from 'src/config/app.config';
 import { UpdateHireDto } from 'src/modules/application/client/hire/dto/update-hire.dto';
@@ -104,8 +104,8 @@ export class HireService {
         ];
       }
 
-      if (status && Object.values(JobStatus).includes(status as JobStatus)) {
-        where.status = status as JobStatus;
+      if (status && Object.values(HireStatus).includes(status as HireStatus)) {
+        where.status = status as HireStatus;
       }
 
       const [hires, total] = await Promise.all([
@@ -169,8 +169,8 @@ export class HireService {
         ];
       }
 
-      if (status && Object.values(JobStatus).includes(status as JobStatus)) {
-        where.status = status as JobStatus;
+      if (status && Object.values(HireStatus).includes(status as HireStatus)) {
+        where.status = status as HireStatus;
       }
 
       const [hires, total] = await Promise.all([
@@ -200,7 +200,7 @@ export class HireService {
           remaining_time_ms = Math.max(0, deadline - now);
         } else if (hire.status === 'PENDING') {
           remaining_time_ms = durationInMs;
-        } else if (hire.status === 'CANCEL' || hire.status === 'LATE') {
+        } else if (hire.status === 'CANCELLED' || (hire.status as string) === 'CANCEL' || (hire.status as string) === 'LATE') {
           remaining_time_ms = 0;
         }
 
@@ -282,7 +282,7 @@ export class HireService {
       remaining_time_ms = Math.max(0, deadline.getTime() - now);
     } else if (mappedHire.status === 'PENDING') {
       remaining_time_ms = durationInMs;
-    } else if (mappedHire.status === 'CANCEL' || mappedHire.status === 'LATE') {
+    } else if (mappedHire.status === 'CANCELLED' || (mappedHire.status as string) === 'CANCEL' || (mappedHire.status as string) === 'LATE') {
       remaining_time_ms = 0;
     }
 
