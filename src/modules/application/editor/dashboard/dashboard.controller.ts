@@ -24,7 +24,7 @@ export class DashboardController {
 
   @Get('active-jobs-count')
   @ApiOperation({
-    summary: 'Get count of active jobs',
+    summary: 'Get count of active jobs ✧',
     description:
       'Returns count of jobs with APPROVED bids and IN_PROGRESS jobs.',
   })
@@ -53,7 +53,7 @@ export class DashboardController {
 
   @Get('my-orders')
   @ApiOperation({
-    summary: 'Get all active orders (Combined Flat List)',
+    summary: 'Get all active orders ✧',
     description:
       'Direct Hires and Accepted Bidded Jobs are combined into a single flat list and sorted in chronological order (most recent first).',
   })

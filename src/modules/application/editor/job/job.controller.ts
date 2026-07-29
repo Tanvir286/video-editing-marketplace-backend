@@ -88,9 +88,7 @@ export class JobController {
       },
     },
   })
-  async quickMatch(
-    @Query() paginationDto: PaginationDto, 
-    @Req() req: any) {
+  async quickMatch(@Query() paginationDto: PaginationDto, @Req() req: any) {
     const userId = req.user.userId;
     return this.jobService.quickMatch(paginationDto, userId);
   }
@@ -152,9 +150,7 @@ export class JobController {
       },
     },
   })
-  async browseJobs(
-    @Query() paginationDto: PaginationDto
-  ) {
+  async browseJobs(@Query() paginationDto: PaginationDto) {
     return this.jobService.browseJobs(paginationDto);
   }
 
@@ -245,10 +241,4 @@ export class JobController {
   /*--------------------------------------------------
                hire request
   --------------------------------------------------*/
-  
- 
-
-
-
-
 }

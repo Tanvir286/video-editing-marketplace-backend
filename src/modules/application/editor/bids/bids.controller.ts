@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -21,6 +23,9 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { USER_TYPES } from 'src/common/swagger/swagger-auth';
 import { BidsService } from './bids.service';
 import { CreateBidDto } from './dto/create-bid.dto';
+import { PaginationDto } from 'src/common/pagination/pagination.dto';
+import { BidPaginationDto } from './dto/pagination-bid.dto';
+import { BidStatus } from 'prisma/generated';
 
 @ApiTags('🏳️Editor Bids')
 @ApiBearerAuth(USER_TYPES.EDITOR)
@@ -29,9 +34,31 @@ import { CreateBidDto } from './dto/create-bid.dto';
 export class BidsController {
   constructor(private readonly bidsService: BidsService) {}
 
+  // my job proposal
+  @Get('job')
+  @ApiOperation({ summary: 'Get all job proposal ✧' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: BidStatus,
+    description: 'Filter by bid status (PENDING,CANCELLED)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Job proposal list retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Job proposal not found' })
+  async getJobProposal(
+    @Query() paginationDto: BidPaginationDto,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.userId;
+    return this.bidsService.getJobProposal(userId, paginationDto);
+  }
+
   // create a new bid
   @Post(':jobId/create')
-  @ApiOperation({ summary: 'Create a bid for a job' })
+  @ApiOperation({ summary: 'Create a bid for a job ✧' })
   @ApiParam({ name: 'jobId', description: 'Job ID to bid on' })
   @ApiBody({
     type: CreateBidDto,
@@ -82,11 +109,8 @@ export class BidsController {
   @ApiParam({ name: 'bidId', description: 'Bid ID to delete' })
   @ApiResponse({ status: 200, description: 'Bid deleted successfully' })
   @ApiResponse({ status: 404, description: 'Bid not found' })
-  async delete(
-    @Param('bidId') bidId: string,
-  ) {
+  async delete(@Param('bidId') bidId: string) {
     const result = await this.bidsService.deleteBid(bidId);
     return { success: true, message: 'Bid deleted successfully', data: result };
   }
-
 }

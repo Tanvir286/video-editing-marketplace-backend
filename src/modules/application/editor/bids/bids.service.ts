@@ -11,10 +11,82 @@ import { CreateBidDto } from './dto/create-bid.dto';
 import { UpdateBidDto } from './dto/update-bid.dto';
 import { BidStatus } from 'prisma/generated';
 import { ImageGetUtil } from 'src/common/utils/image/image.util';
+import { PaginationDto } from 'src/common/pagination/pagination.dto';
+import { BidPaginationDto } from './dto/pagination-bid.dto';
 
 @Injectable()
 export class BidsService {
   constructor(private prisma: PrismaService) {}
+
+  // my job proposal
+  async getJobProposal(userId: string, paginationDto: BidPaginationDto) {
+   
+    const page = paginationDto?.page ?? 1;
+    const limit = paginationDto?.limit ?? 10;
+    const skip = (page - 1) * limit;
+    const status = paginationDto?.status;
+
+    const where: any = {
+      user_id: userId,
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    // Get total count and data
+    const [total, bids] = await this.prisma.$transaction([
+      this.prisma.bid.count({ where }),
+      this.prisma.bid.findMany({
+        where,
+        orderBy: {
+          created_at: 'desc',
+        },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          amount: true,
+          req_date: true,
+          message: true,
+          status: true,
+          job: {
+            select: {
+              id: true,
+              job_title: true,
+              job_photo: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const formatData = bids.map((bid) => ({
+      id: bid.id,
+      amount: bid.amount,
+      req_date: bid.req_date,
+      message: bid.message,
+      status: bid.status,
+      job: {
+        id: bid.job.id,
+        job_title: bid.job.job_title,
+        job_photo: bid.job.job_photo,
+        job_photo_url: ImageGetUtil.jobPhoto(bid.job.job_photo),
+      },
+    }));
+
+    return {
+      success: true,
+      message: 'Job proposals fetched successfully',
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      data: formatData,
+    };
+  }
 
   // add a new bid for a job
   async createBid(userId: string, dto: CreateBidDto, jobId: string) {
@@ -93,41 +165,41 @@ export class BidsService {
       }
 
       const bids = await this.prisma.bid.findMany({
-      where: { jobId: jobId },
-      select: {
-        id: true,
-        amount: true,
-        req_date: true,
-        message: true,
-        status: true,
-        created_at: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
+        where: { jobId: jobId },
+        select: {
+          id: true,
+          amount: true,
+          req_date: true,
+          message: true,
+          status: true,
+          created_at: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
           },
         },
-      },
-      orderBy: {
-        created_at: 'desc', 
-      },
-    });
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
 
-    const format = bids.map(item => ({
-      id: item.id,
-      amount: item.amount,
-      req_date: item.req_date,
-      message: item.message,
-      status: item.status,
-      created_at: item.created_at,
-      user: {
-        id: item.user.id,
-        name: item.user.name,
-        avatar: item.user.avatar,
-        avatar_url:ImageGetUtil.avatarUrl(item.user.avatar)
-      },
-    }));
+      const format = bids.map((item) => ({
+        id: item.id,
+        amount: item.amount,
+        req_date: item.req_date,
+        message: item.message,
+        status: item.status,
+        created_at: item.created_at,
+        user: {
+          id: item.user.id,
+          name: item.user.name,
+          avatar: item.user.avatar,
+          avatar_url: ImageGetUtil.avatarUrl(item.user.avatar),
+        },
+      }));
 
       return format;
     } catch (error) {
@@ -160,6 +232,4 @@ export class BidsService {
       throw new InternalServerErrorException('Failed to delete bid');
     }
   }
-
-  
 }

@@ -13,10 +13,7 @@ export class JobService {
                   get all jobs pending job
   -------------------------------------------------------*/
 
-  async quickMatch(
-    paginationDto: PaginationDto, 
-    editorId: string
-  ) {
+  async quickMatch(paginationDto: PaginationDto, editorId: string) {
     const page = paginationDto?.page ?? 1;
     const limit = paginationDto?.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -30,7 +27,7 @@ export class JobService {
       s.skill_name.toLowerCase().trim(),
     );
 
-    console.log(editorSkills,editorId);
+    console.log(editorSkills, editorId);
 
     const jobs = await this.prisma.jOB.findMany({
       where: { status: JobStatus.PENDING },
@@ -65,7 +62,8 @@ export class JobService {
       job_title: job.job_title,
       job_photo: job.job_photo,
       job_photo_url: ImageGetUtil.jobPhotoUrl(job.job_photo),
-      user_name:`${job.user?.first_name ?? ''} ${job.user?.last_name ?? ''}`.trim(),
+      user_name:
+        `${job.user?.first_name ?? ''} ${job.user?.last_name ?? ''}`.trim(),
       user_photo: job.user?.avatar,
       user_photo_url: ImageGetUtil.avatarUrl(job.user?.avatar),
       skill: job.skill,
@@ -100,10 +98,7 @@ export class JobService {
                   browse jobs pending job
   -------------------------------------------------------*/
 
-  async browseJobs(
-    paginationDto: PaginationDto
-  ) {
-
+  async browseJobs(paginationDto: PaginationDto) {
     const page = paginationDto?.page ?? 1;
     const limit = paginationDto?.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -128,7 +123,6 @@ export class JobService {
           project_duration: true,
           status: true,
           skill: true,
-          deadline: true,
           job_photo: true,
           user: {
             select: {
@@ -149,7 +143,6 @@ export class JobService {
       job_title: job.job_title,
       total_payment: job.total_payment,
       project_duration: job.project_duration,
-      deadline: job.deadline,
       status: job.status,
       job_photo: job.job_photo,
       job_photo_url: ImageGetUtil.jobPhoto(job.job_photo),
@@ -157,9 +150,7 @@ export class JobService {
       user_name: job.user?.first_name ?? null,
       user_location: job.user?.country ?? null,
       user_photo: job.user?.avatar ?? null,
-      user_photo_url: ImageGetUtil.avatar(job.user?.avatar),
-      reviews_avarage: 0,
-      reviews_count: 0,
+      user_photo_url: ImageGetUtil.avatar(job.user?.avatar)
     }));
 
     return {
@@ -179,10 +170,7 @@ export class JobService {
               get job details
   --------------------------------------------------*/
 
-  async getJobDetails(
-    jobId: string, 
-    paginationDto?: PaginationDto
-  ) {
+  async getJobDetails(jobId: string, paginationDto?: PaginationDto) {
     const page = paginationDto?.page ?? 1;
     const limit = paginationDto?.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -291,15 +279,16 @@ export class JobService {
           created_at: bid.created_at,
           avatar: bid.user?.avatar ?? null,
           avatar_url: ImageGetUtil.avatarUrl(bid.user?.avatar),
-          bidder_name: `${bid.user?.first_name ?? ''} ${bid.user?.last_name ?? ''}`.trim(),
-        })), 
+          bidder_name:
+            `${bid.user?.first_name ?? ''} ${bid.user?.last_name ?? ''}`.trim(),
+        })),
         buyer_info: {
-         user_name:`${job.user?.first_name ?? ''} ${job.user?.last_name ?? ''}`.trim(),
-         user_photo_url: ImageGetUtil.avatarUrl(job.user?.avatar),
-         user_location: job.user?.country ?? null,
-         user_language: job.user?.language ?? null,
+          user_name:
+            `${job.user?.first_name ?? ''} ${job.user?.last_name ?? ''}`.trim(),
+          user_photo_url: ImageGetUtil.avatarUrl(job.user?.avatar),
+          user_location: job.user?.country ?? null,
+          user_language: job.user?.language ?? null,
         },
-        
       },
     };
   }
@@ -307,6 +296,4 @@ export class JobService {
   /*--------------------------------------------------
                hire request
   --------------------------------------------------*/
-
-  
 }
