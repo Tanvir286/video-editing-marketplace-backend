@@ -37,7 +37,7 @@ import { use } from 'passport';
 import { USER_TYPES } from 'src/common/swagger/swagger-auth';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 
-@ApiTags('**Editor Profile**')
+@ApiTags('🏳️Editor Profile')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth(USER_TYPES.EDITOR)
 @Controller('editor/profile')
@@ -69,6 +69,12 @@ export class ProfileController {
           skills: [],
           protfolios: [],
           educations: [],
+          completed_jobs_count: 120,
+          unique_clients_count: 75,
+          avarage_response_time: 1,
+          rating: 4.9,
+          total_reviews: 538,
+          review_text: '4.9 (538 reviews)',
         },
       },
     },

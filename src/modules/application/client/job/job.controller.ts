@@ -22,6 +22,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiExcludeController,
   ApiExtraModels,
   ApiOperation,
   ApiParam,
@@ -34,6 +35,7 @@ import { USER_TYPES } from 'src/common/swagger/swagger-auth';
 import { JobStatus } from 'prisma/generated';
 
 @ApiTags('🏳️Client Job Management')
+@ApiExcludeController()
 @ApiBearerAuth(USER_TYPES.CLIENT)
 @ApiExtraModels(ClientCreateJobDto, ClientUpdateJobDto)
 @Controller('jobs')

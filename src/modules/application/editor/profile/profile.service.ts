@@ -12,22 +12,22 @@ import { UpdateEducationDto } from './dto/update-education.dto';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateAboutDto } from './dto/update-about.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
+import { BidStatus, JobStatus, HireStatus } from 'prisma/generated';
 
 @Injectable()
 export class ProfileService {
-  
   constructor(private prisma: PrismaService) {}
-
 
   // *get full profile
   async getFullProfile(userId: string) {
+ 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         name: true,
         bio: true,
-        location: true,
+        country: true,
         language: true,
         avatar: true,
         about_me: true,
@@ -44,20 +44,119 @@ export class ProfileService {
       };
     }
 
+    const [completedBiddedJobs, completedHires, reviewsAggregate] = await Promise.all([
+      this.prisma.jOB.findMany({
+        where: {
+          bids: {
+            some: {
+              user_id: userId,
+              status: BidStatus.ACCEPTED,
+            },
+          },
+          status: JobStatus.COMPLETED,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      }),
+      this.prisma.hire.findMany({
+        where: {
+          hire_profile_id: userId,
+          status: HireStatus.COMPLETED,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      }),
+      this.prisma.review.aggregate({
+        where: {
+          service_provider_id: userId,
+        },
+        _avg: {
+          rating: true,
+        },
+        _count: {
+          id: true,
+        },
+      }),
+    ]);
+
+    const rating = reviewsAggregate._avg.rating
+      ? Number(reviewsAggregate._avg.rating.toFixed(1))
+      : 0;
+    const total_reviews = reviewsAggregate._count.id || 0;
+
+    const formattedBiddedJobs = completedBiddedJobs.map((job) => ({
+      id: job.id,
+      type: 'BIDDED_JOB',
+      status: job.status,
+      completed_at: job.updated_at,
+    }));
+
+    const formattedHires = completedHires.map((hire) => ({
+      id: hire.id,
+      type: 'DIRECT_HIRE',
+      status: hire.status,
+      completed_at: hire.createdAt,
+    }));
+
+    const completedJobsList = [...formattedBiddedJobs, ...formattedHires].sort(
+      (a, b) =>
+        new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime(),
+    );
+
+    const uniqueClientIds = new Set<string>();
+
+    completedBiddedJobs.forEach((j) => {
+      if (j.user?.id) uniqueClientIds.add(j.user.id);
+    });
+
+    completedHires.forEach((h) => {
+      if (h.user?.id) uniqueClientIds.add(h.user.id);
+    });
+
     const formatedData = (userData) => {
       return {
-        ...userData,
-        // Format avatar URL
-        avatar_url: userData.avatar 
-          ? SojebStorage.url(`${appConfig().storageUrl.avatar}/${userData.avatar}`)
-          : null,
-        // Format portfolio thumbnail URLs
-        protfolios: userData.protfolios.map(portfolio => ({
-          ...portfolio,
+        id: userData.id,
+        name: userData.name,
+        bio: userData.bio,
+        country: userData.country,
+        language: userData.language,
+        avatar: userData.avatar,
+        avatar_url: userData.avatar ? SojebStorage.url(
+              `${appConfig().storageUrl.avatar}/${userData.avatar}`,
+        ): null,
+        completed_jobs_count: completedJobsList.length,
+        unique_clients_count: uniqueClientIds.size,
+        avarage_response_time: 1,
+        rating:rating,
+        total_reviews:total_reviews,
+       
+          
+        about_me: userData.about_me,
+        skills: userData.skills,
+        protfolios: userData.protfolios?.map((portfolio) => ({
+          id: portfolio.id,
+          title: portfolio.title,
+          project_type: portfolio.project_type,
+          description: portfolio.description,
+          thumbnail: portfolio.thumbnail,
           thumbnail_url: portfolio.thumbnail
-            ? SojebStorage.url(`${appConfig().storageUrl.portfolio}/${portfolio.thumbnail}`)
+            ? SojebStorage.url(
+                `${appConfig().storageUrl.portfolio}/${portfolio.thumbnail}`,
+              )
             : null,
         })),
+        educations: userData.educations,
+        
       };
     };
 
@@ -87,24 +186,30 @@ export class ProfileService {
         select: { avatar: true },
       });
       if (oldUser?.avatar) {
-        await SojebStorage.delete(appConfig().storageUrl.avatar + '/' + oldUser.avatar);
+        await SojebStorage.delete(
+          appConfig().storageUrl.avatar + '/' + oldUser.avatar,
+        );
       }
 
       const fileName = `${StringHelper.randomString()}${avatar.originalname}`;
-      await SojebStorage.put(appConfig().storageUrl.avatar + '/' + fileName, avatar.buffer);
+      await SojebStorage.put(
+        appConfig().storageUrl.avatar + '/' + fileName,
+        avatar.buffer,
+      );
       data.avatar = fileName;
     }
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data,
-      select: { 
+      select: {
         id: true,
-        name: true, 
-        bio: true, 
-        location: true, 
-        language: true, 
-        avatar: true },
+        name: true,
+        bio: true,
+        location: true,
+        language: true,
+        avatar: true,
+      },
     });
 
     return {
@@ -115,17 +220,14 @@ export class ProfileService {
   }
 
   // *update about me section
-  async updateAbout(
-    userId: string, 
-    updateAboutDto: UpdateAboutDto) {
-    
+  async updateAbout(userId: string, updateAboutDto: UpdateAboutDto) {
     if (!updateAboutDto.about_me || updateAboutDto.about_me.trim() === '') {
       return {
         success: false,
         message: 'about_me field is required and cannot be empty',
       };
     }
-  
+
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: { about_me: updateAboutDto.about_me },
@@ -143,20 +245,20 @@ export class ProfileService {
 
   // *create portfolio
   async createPortfolio(
-    userId: string, 
-    createPortfolioDto: CreatePortfolioDto, 
-    thumbnail: Express.Multer.File) 
-    {
-    const { 
-      title, 
-      project_type, 
-      description } = createPortfolioDto;
+    userId: string,
+    createPortfolioDto: CreatePortfolioDto,
+    thumbnail: Express.Multer.File,
+  ) {
+    const { title, project_type, description } = createPortfolioDto;
 
     let thumbnailName: string | null = null;
 
     if (thumbnail) {
       thumbnailName = `${StringHelper.randomString()}${thumbnail.originalname}`;
-      await SojebStorage.put(appConfig().storageUrl.portfolio + '/' + thumbnailName, thumbnail.buffer);
+      await SojebStorage.put(
+        appConfig().storageUrl.portfolio + '/' + thumbnailName,
+        thumbnail.buffer,
+      );
     }
 
     const portfolio = await this.prisma.protfolio.create({
@@ -185,11 +287,12 @@ export class ProfileService {
 
   // *update portfolio
   async updatePortfolio(
-    userId: string, id: string, 
-    updatePortfolioDto: UpdatePortfolioDto, 
-    thumbnail?: Express.Multer.File) 
-    {
-    const {title,project_type,description} = updatePortfolioDto  
+    userId: string,
+    id: string,
+    updatePortfolioDto: UpdatePortfolioDto,
+    thumbnail?: Express.Multer.File,
+  ) {
+    const { title, project_type, description } = updatePortfolioDto;
 
     const data: any = {};
     if (title) data.title = title;
@@ -202,11 +305,16 @@ export class ProfileService {
         select: { thumbnail: true },
       });
       if (oldPortfolio?.thumbnail) {
-        await SojebStorage.delete(appConfig().storageUrl.portfolio + '/' + oldPortfolio.thumbnail);
+        await SojebStorage.delete(
+          appConfig().storageUrl.portfolio + '/' + oldPortfolio.thumbnail,
+        );
       }
 
       const thumbnailName = `${StringHelper.randomString()}${thumbnail.originalname}`;
-      await SojebStorage.put(appConfig().storageUrl.portfolio + '/' + thumbnailName, thumbnail.buffer);
+      await SojebStorage.put(
+        appConfig().storageUrl.portfolio + '/' + thumbnailName,
+        thumbnail.buffer,
+      );
       data.thumbnail = thumbnailName;
     }
 
@@ -231,13 +339,14 @@ export class ProfileService {
 
   // *delete portfolio
   async deletePortfolio(userId: string, id: string) {
-    
     const portfolio = await this.prisma.protfolio.findFirst({
       where: { id, user_id: userId },
       select: { thumbnail: true },
     });
     if (portfolio?.thumbnail) {
-      await SojebStorage.delete(appConfig().storageUrl.portfolio + '/' + portfolio.thumbnail);
+      await SojebStorage.delete(
+        appConfig().storageUrl.portfolio + '/' + portfolio.thumbnail,
+      );
     }
 
     await this.prisma.protfolio.delete({
@@ -254,15 +363,10 @@ export class ProfileService {
 
   // *create education
   async createEducation(
-    userId: string, 
-    createEducationDto: CreateEducationDto
+    userId: string,
+    createEducationDto: CreateEducationDto,
   ) {
-   
-    const { 
-      course_name, 
-      subject, 
-      passing_year 
-    } = createEducationDto;
+    const { course_name, subject, passing_year } = createEducationDto;
 
     const education = await this.prisma.education.create({
       data: {
@@ -288,10 +392,10 @@ export class ProfileService {
 
   // *update education
   async updateEducation(
-    userId: string, 
-    id: string, 
-    updateEducationDto: UpdateEducationDto) {
-
+    userId: string,
+    id: string,
+    updateEducationDto: UpdateEducationDto,
+  ) {
     const { course_name, subject, passing_year } = updateEducationDto;
 
     const data: any = {};
@@ -349,7 +453,6 @@ export class ProfileService {
 
   // *create skills
   async createSkills(userId: string, dto: CreateSkillDto) {
-
     const result = await this.prisma.skills.create({
       data: {
         skill_name: dto.skill_name,
@@ -364,13 +467,12 @@ export class ProfileService {
     };
   }
 
-
   // *update skills
   async updateSkills(
-    userId: string, 
-    id: string, 
-    updateSkillDto: UpdateSkillDto) {
-
+    userId: string,
+    id: string,
+    updateSkillDto: UpdateSkillDto,
+  ) {
     const { skill_name } = updateSkillDto;
 
     const data: any = {};
@@ -378,7 +480,7 @@ export class ProfileService {
 
     const updatedSkill = await this.prisma.skills.update({
       where: { id, user_id: userId },
-      data, 
+      data,
       select: {
         id: true,
         skill_name: true,
@@ -391,8 +493,4 @@ export class ProfileService {
       data: updatedSkill,
     };
   }
-  
-  
-
 }
-
