@@ -11,7 +11,7 @@ CREATE TYPE "JobCategory" AS ENUM ('LONG_FORM_VIDEO', 'SHORTS_REELS_TIKTOKS', 'T
 CREATE TYPE "Platform" AS ENUM ('YOUTUBE', 'FACEBOOK', 'X', 'INSTAGRAM', 'TIKTOK', 'LINKEDIN', 'SNAPCHATS', 'PINTEREST', 'VIMEO', 'TWITCH', 'THREADS', 'OTHER');
 
 -- CreateEnum
-CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCEL', 'LATE');
+CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'LATE');
 
 -- CreateEnum
 CREATE TYPE "VideoCategory" AS ENUM ('LONG_FORM', 'SHORT_FORM', 'THUMBNAIL', 'ADS_UGC', 'PODCAST', 'WEDDING_EVENT', 'COLOR_AUDIO', 'CAPTION_SUBTITLE');
@@ -20,7 +20,10 @@ CREATE TYPE "VideoCategory" AS ENUM ('LONG_FORM', 'SHORT_FORM', 'THUMBNAIL', 'AD
 CREATE TYPE "SoftwarePreference" AS ENUM ('FINAL_CUT_PRO', 'DAVINCI_RESOLVE', 'SONY_VEGAS', 'ADOBE_PREMIERE_PRO', 'FILMORA', 'AFTER_EFFECTS', 'CAPCUT', 'ANY');
 
 -- CreateEnum
-CREATE TYPE "BidStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECT', 'IN_PROGRESS', 'CANCELLED', 'ACCEPTED');
+CREATE TYPE "BidStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED', 'LATE');
+
+-- CreateEnum
+CREATE TYPE "HireStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED', 'LATE');
 
 -- CreateEnum
 CREATE TYPE "DeliveryStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'REVISION_REQUESTED');
@@ -194,6 +197,9 @@ CREATE TABLE "bids" (
 -- CreateTable
 CREATE TABLE "hires" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "startedAt" TIMESTAMP(3),
     "project_title" TEXT NOT NULL,
     "video_category" "VideoCategory" NOT NULL,
     "project_photo" TEXT,
@@ -202,13 +208,10 @@ CREATE TABLE "hires" (
     "project_budget" DOUBLE PRECISION,
     "project_duration" DOUBLE PRECISION,
     "total_amount" DOUBLE PRECISION,
-    "hire_profile_id" TEXT,
-    "user_id" TEXT NOT NULL,
-    "status" "JobStatus" NOT NULL DEFAULT 'PENDING',
+    "hire_profile_id" TEXT NOT NULL,
+    "status" "HireStatus" NOT NULL DEFAULT 'PENDING',
     "software_preference" "SoftwarePreference"[],
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "startedAt" TIMESTAMP(3),
+    "user_id" TEXT NOT NULL,
 
     CONSTRAINT "hires_pkey" PRIMARY KEY ("id")
 );

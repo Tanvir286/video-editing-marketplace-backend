@@ -15,6 +15,7 @@ import {
   VideoCategory,
   SoftwarePreference,
   UserType,
+  BidStatus,
 } from 'prisma/generated';
 
 @Command({ name: 'seed', description: 'prisma db seed' })
@@ -170,7 +171,7 @@ export class SeedCommand extends CommandRunner {
         },
       });
 
-      await this.prisma.delivery.deleteMany({
+      await this.prisma.jobDelivery.deleteMany({
         where: {
           user_id: { in: seededUserIds },
         },
@@ -337,11 +338,11 @@ export class SeedCommand extends CommandRunner {
           (job.project_duration * (0.8 + j * 0.1)).toFixed(1),
         );
 
-        let bidStatus = 'PENDING';
+        let bidStatus: BidStatus = BidStatus.PENDING;
         if (status === JobStatus.IN_PROGRESS && j === 0) {
-          bidStatus = 'IN_PROGRESS';
+          bidStatus = BidStatus.IN_PROGRESS;
         } else if (status === JobStatus.COMPLETED && j === 0) {
-          bidStatus = 'ACCEPTED';
+          bidStatus = BidStatus.ACCEPTED;
         }
 
         await this.prisma.bid.create({
@@ -351,7 +352,7 @@ export class SeedCommand extends CommandRunner {
             message: `Hi Client, I am ${editor.name}. I would love to edit your ${jobCategory.toLowerCase().replace(/_/g, ' ')} project on ${platform}. I have a lot of experience and can deliver within ${bidDuration} days.`,
             jobId: job.id,
             user_id: editor.id,
-            status: bidStatus as any,
+            status: bidStatus,
           },
         });
       }
@@ -375,7 +376,7 @@ export class SeedCommand extends CommandRunner {
 
       // Create accepted deliveries only for COMPLETED jobs
       if (job.status === JobStatus.COMPLETED) {
-        const delivery = await this.prisma.delivery.create({
+        const delivery = await this.prisma.jobDelivery.create({
           data: {
             job_id: job.id,
             user_id: assignedEditor.id,

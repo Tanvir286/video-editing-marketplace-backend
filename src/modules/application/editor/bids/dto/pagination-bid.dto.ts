@@ -27,7 +27,7 @@ export class BidPaginationDto {
 
   @ApiPropertyOptional({ 
     enum: BidStatus,
-    description: 'Filter by bid status (PENDING, APPROVED, REJECT, IN_PROGRESS, CANCELLED, ACCEPTED)',
+    description: 'Filter by bid status (PENDING, ACCEPTED, REJECTED, IN_PROGRESS, CANCELLED, COMPLETED, LATE)',
   })
   @IsOptional()
   @IsEnum(BidStatus)

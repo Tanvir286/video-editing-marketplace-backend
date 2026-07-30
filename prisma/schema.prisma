@@ -111,7 +111,7 @@ model User {
   bids                 Bid[]
   hires                Hire[]
   extensionRequests    ExtensionRequest[]
-  deliveries           Delivery[]
+  deliveries           JobDelivery[]
   reviews              Review[]
 
   @@map("users")
@@ -230,9 +230,11 @@ enum Platform {
 
 enum JobStatus {
   PENDING
+  ACCEPTED
+  REJECTED
   IN_PROGRESS
   COMPLETED
-  CANCEL
+  CANCELLED
   LATE
 }
 
@@ -259,43 +261,46 @@ enum SoftwarePreference {
 }
 
 model JOB {
-  id                String             @id @default(cuid())
-  job_title         String?
-  job_description   String?
-  job_photo         String?
-  content_length    ContentLength
-  project_budget    Float?
-  job_category      JobCategory
-  project_duration  Float?
-  platform          Platform
-  skill             String?
-  reference         String?
-  total_payment     Float?
-  fileId            String?
-  status            JobStatus          @default(PENDING)
+  id               String        @id @default(cuid())
+  job_title        String?
+  job_description  String?
+  job_photo        String?
+  content_length   ContentLength
+  project_budget   Float?
+  job_category     JobCategory
+  project_duration Float?
+  platform         Platform
+  skill            String?
+  reference        String?
+  total_payment    Float?
+  fileId           String?
+  status           JobStatus     @default(PENDING)
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+  deleted_at       DateTime?
+  started_at       DateTime?
+  deadline         DateTime?
+
   bids              Bid[]
-  created_at        DateTime           @default(now())
-  updated_at        DateTime           @updatedAt
-  deleted_at        DateTime?
-  started_at        DateTime?
-  deadline          DateTime?
-  user_id           String?
-  user              User?              @relation(fields: [user_id], references: [id])
   attachment        Attachment[]
-  deliveries        Delivery[]
+  deliveries        JobDelivery[]
   extensionRequests ExtensionRequest[]
   reviews           Review[]
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id])
 
   @@map("jobs")
 }
 
 enum BidStatus {
   PENDING
-  APPROVED
-  REJECT
+  ACCEPTED
+  REJECTED
   IN_PROGRESS
   CANCELLED
-  ACCEPTED
+  COMPLETED
+  LATE
 }
 
 model Bid {
@@ -325,6 +330,7 @@ enum HireStatus {
   IN_PROGRESS
   CANCELLED
   COMPLETED
+  LATE
 }
 
 model Hire {
@@ -342,7 +348,7 @@ model Hire {
   project_duration Float?
   total_amount     Float?
 
-  hire_profile_id  String
+  hire_profile_id String
   status          HireStatus @default(PENDING)
 
   software_preference SoftwarePreference[]
@@ -372,9 +378,9 @@ model Review {
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
 
-  user     User      @relation(fields: [user_id], references: [id])
-  job      JOB?      @relation(fields: [job_id], references: [id])
-  delivery Delivery? @relation(fields: [delivery_id], references: [id])
+  user     User         @relation(fields: [user_id], references: [id])
+  job      JOB?         @relation(fields: [job_id], references: [id])
+  delivery JobDelivery? @relation(fields: [delivery_id], references: [id])
 
   @@map("reviews")
 }
@@ -386,7 +392,7 @@ enum DeliveryStatus {
   REVISION_REQUESTED
 }
 
-model Delivery {
+model JobDelivery {
   id          String       @id @default(uuid())
   job_id      String?
   user_id     String?
@@ -620,11 +626,11 @@ model Attachment {
 
   messages   Message[]
   jobs       JOB[]
-  hire       Hire?     @relation(fields: [hire_id], references: [id])
+  hire       Hire?        @relation(fields: [hire_id], references: [id])
   hire_id    String?
-  review     Review?   @relation(fields: [reviewId], references: [id])
+  review     Review?      @relation(fields: [reviewId], references: [id])
   reviewId   String?
-  delivery   Delivery? @relation(fields: [deliveryId], references: [id])
+  delivery   JobDelivery? @relation(fields: [deliveryId], references: [id])
   deliveryId String?
 
   @@map("attachments")

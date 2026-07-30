@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ExtensionStatus } from 'prisma/generated';
+import { ExtensionStatus, BidStatus } from 'prisma/generated';
 import { CreateExtensionDto } from 'src/modules/application/editor/extension/dto/create-extension.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -21,7 +21,7 @@ export class ExtensionService {
         bids: {
           where: {
             user_id: userId,
-            status: 'ACCEPTED', // Sudhu matro jake assign kora hoyeche
+            status: BidStatus.ACCEPTED, // Sudhu matro jake assign kora hoyeche
           },
         },
         // User type check korar jonno

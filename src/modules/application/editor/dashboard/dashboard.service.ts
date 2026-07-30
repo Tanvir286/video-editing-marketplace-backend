@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginationDto } from 'src/common/pagination/pagination.dto';
+import { BidStatus } from 'prisma/generated';
 
 @Injectable()
 export class DashboardService {
@@ -15,7 +16,7 @@ export class DashboardService {
         bids: {
           some: {
             user_id: userId,
-            status: 'ACCEPTED',
+            status: BidStatus.ACCEPTED,
           },
         },
         status: 'IN_PROGRESS',
@@ -60,7 +61,7 @@ export class DashboardService {
         this.prisma.jOB.count({
           where: {
             bids: {
-              some: { user_id: userId, status: 'ACCEPTED' },
+              some: { user_id: userId, status: BidStatus.ACCEPTED },
             },
           },
         }),
@@ -77,7 +78,7 @@ export class DashboardService {
         this.prisma.jOB.findMany({
           where: {
             bids: {
-              some: { user_id: userId, status: 'ACCEPTED' },
+              some: { user_id: userId, status: BidStatus.ACCEPTED },
             },
           },
           include: {

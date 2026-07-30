@@ -26,7 +26,7 @@ export class DashboardController {
   @ApiOperation({
     summary: 'Get count of active jobs ✧',
     description:
-      'Returns count of jobs with APPROVED bids and IN_PROGRESS jobs.',
+      'Returns count of jobs with ACCEPTED bids and IN_PROGRESS jobs.',
   })
   @ApiOkResponse({
     description: 'Successfully retrieved active jobs count',
