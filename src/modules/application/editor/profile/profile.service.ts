@@ -31,9 +31,29 @@ export class ProfileService {
         language: true,
         avatar: true,
         about_me: true,
-        skills: true,
-        protfolios: true,
-        educations: true,
+        skills: {
+          select: {
+            id: true,
+            skill_name: true,
+          },
+        },
+        protfolios: {
+          select: {
+            id: true,
+            title: true,
+            project_type: true,
+            description: true,
+            thumbnail: true,
+          },
+        },
+        educations: {
+          select: {
+            id: true,
+            course_name: true,
+            subject: true,
+            passing_year: true,
+          },
+        },
       },
     });
 
@@ -44,50 +64,59 @@ export class ProfileService {
       };
     }
 
-    const [completedBiddedJobs, completedHires, reviewsAggregate] = await Promise.all([
-      this.prisma.jOB.findMany({
-        where: {
-          bids: {
-            some: {
-              user_id: userId,
-              status: BidStatus.ACCEPTED,
+    const [
+      completedBiddedJobs,completedHires,reviewsAggregate] = await Promise.all([
+    
+          this.prisma.jOB.findMany({
+            where: {
+              bids: {
+                some: {
+                  user_id: userId,
+                  status: BidStatus.ACCEPTED,
+                },
+              },
+              status: JobStatus.COMPLETED,
             },
-          },
-          status: JobStatus.COMPLETED,
-        },
-        include: {
-          user: {
-            select: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatar: true,
+                },
+              },
+            },
+          }),
+
+          this.prisma.hire.findMany({
+            where: {
+              hire_profile_id: userId,
+              status: HireStatus.COMPLETED,
+            },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatar: true,
+                },
+              },
+            },
+          }),
+
+          this.prisma.review.aggregate({
+            where: {
+              service_provider_id: userId,
+            },
+            _avg: {
+              rating: true,
+            },
+            _count: {
               id: true,
             },
-          },
-        },
-      }),
-      this.prisma.hire.findMany({
-        where: {
-          hire_profile_id: userId,
-          status: HireStatus.COMPLETED,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      }),
-      this.prisma.review.aggregate({
-        where: {
-          service_provider_id: userId,
-        },
-        _avg: {
-          rating: true,
-        },
-        _count: {
-          id: true,
-        },
-      }),
-    ]);
+          }),
+
+        ]);
 
     const rating = reviewsAggregate._avg.rating
       ? Number(reviewsAggregate._avg.rating.toFixed(1))
@@ -114,14 +143,40 @@ export class ProfileService {
     );
 
     const uniqueClientIds = new Set<string>();
+    const clientProfiles: Array<{ id: string; name: string; avatar?: string | null; avatar_url: string | null }> = [];
 
     completedBiddedJobs.forEach((j) => {
       if (j.user?.id) uniqueClientIds.add(j.user.id);
+      if (j.user?.id && j.user?.name) {
+        clientProfiles.push({
+          id: j.user.id,
+          name: j.user.name,
+          avatar: j.user.avatar,
+          avatar_url: j.user.avatar
+            ? SojebStorage.url(`${appConfig().storageUrl.avatar}/${j.user.avatar}`)
+            : null,
+        });
+      }
     });
 
     completedHires.forEach((h) => {
       if (h.user?.id) uniqueClientIds.add(h.user.id);
+      if (h.user?.id && h.user?.name) {
+        clientProfiles.push({
+          id: h.user.id,
+          name: h.user.name,
+          avatar: h.user.avatar,
+          avatar_url: h.user.avatar
+            ? SojebStorage.url(`${appConfig().storageUrl.avatar}/${h.user.avatar}`)
+            : null,
+        });
+      }
     });
+
+    const uniqueClientProfiles = clientProfiles.filter(
+      (profile, index, self) =>
+        index === self.findIndex((item) => item.id === profile.id),
+    );
 
     const formatedData = (userData) => {
       return {
@@ -139,11 +194,10 @@ export class ProfileService {
         avarage_response_time: 1,
         rating:rating,
         total_reviews:total_reviews,
-       
-          
         about_me: userData.about_me,
-        skills: userData.skills,
-        protfolios: userData.protfolios?.map((portfolio) => ({
+        client_profiles_you_work: uniqueClientProfiles,
+        client_profiles_count: uniqueClientProfiles.length,
+         protfolios: userData.protfolios?.map((portfolio) => ({
           id: portfolio.id,
           title: portfolio.title,
           project_type: portfolio.project_type,
@@ -156,7 +210,7 @@ export class ProfileService {
             : null,
         })),
         educations: userData.educations,
-        
+        skills: userData.skills,
       };
     };
 
@@ -493,4 +547,50 @@ export class ProfileService {
       data: updatedSkill,
     };
   }
+
+  // *reviews summary
+  async getReviewsSummary(userId: string) {
+    const reviewCounts = await this.prisma.review.groupBy({
+      by: ['rating'],
+      where: { service_provider_id: userId },
+      _count: {
+        rating: true,
+      },
+    });
+
+    const countsByRating = {
+      '5': 0,
+      '4': 0,
+      '3': 0,
+      '2': 0,
+      '1': 0,
+    };
+
+    reviewCounts.forEach((item) => {
+      if (item.rating) countsByRating[item.rating.toString()] = item._count.rating;
+    });
+
+    const total_reviews = Object.values(countsByRating).reduce((sum, count) => sum + count, 0);
+
+    return {
+      success: true,
+      message: 'Reviews summary retrieved successfully',
+      data: {
+        total_reviews,
+        five_star: countsByRating['5'],
+        four_star: countsByRating['4'],
+        three_star: countsByRating['3'],
+        two_star: countsByRating['2'],
+        one_star: countsByRating['1'],
+      },
+    };
+  }
+  
+
+   /*------------------------------------
+            Review
+   ------------------------------------*/
+  
+
+
 }

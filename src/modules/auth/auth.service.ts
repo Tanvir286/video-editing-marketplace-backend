@@ -165,6 +165,67 @@ export class AuthService {
     }
   }
 
+  // update user profile
+  async updateUser(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+    image?: Express.Multer.File,
+  ) {
+    try {
+      const data: any = {};
+
+      if (updateUserDto.name) {
+        data.name = updateUserDto.name;
+      }
+
+      if (image) {
+        const oldImage = await this.prisma.user.findFirst({
+          where: { id: userId },
+          select: { avatar: true },
+        });
+        if (oldImage.avatar) {
+          await SojebStorage.delete(
+            appConfig().storageUrl.avatar + '/' + oldImage.avatar,
+          );
+        }
+
+        const fileName = `${StringHelper.randomString()}${image.originalname}`;
+        await SojebStorage.put(
+          appConfig().storageUrl.avatar + '/' + fileName,
+          image.buffer,
+        );
+
+        data.avatar = fileName;
+      }
+
+      const user = await this.userRepository.getUserDetails(userId);
+
+      if (user) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: {
+            ...data,
+          },
+        });
+
+        return {
+          success: true,
+          message: 'User updated successfully',
+        };
+      } else {
+        return {
+          success: false,
+          message: 'User not found',
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
   // login
   async login({ email, userId }) {
     try {
@@ -193,32 +254,6 @@ export class AuthService {
         },
         type: user.type,
       };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  // get all clients
-  async getAllClients() {
-    try {
-      const clients = await this.userRepository.getAllClients();
-      return clients;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  // get all editors
-  async getAllEditors() {
-    try {
-      const editors = await this.userRepository.getAllEditors();
-      return editors;
     } catch (error) {
       return {
         success: false,
@@ -518,265 +553,7 @@ export class AuthService {
     }
   }
 
-  // ---------------------------------(end)---------------------------------------
-
-  // done
-  async refreshToken(user_id: string, refreshToken: string) {
-    try {
-      const storedToken = await this.redis.get(`refresh_token:${user_id}`);
-
-      if (!storedToken || storedToken != refreshToken) {
-        return {
-          success: false,
-          message: 'Refresh token is required',
-        };
-      }
-
-      if (!user_id) {
-        return {
-          success: false,
-          message: 'User not found',
-        };
-      }
-
-      const userDetails = await this.userRepository.getUserDetails(user_id);
-      if (!userDetails) {
-        return {
-          success: false,
-          message: 'User not found',
-        };
-      }
-
-      const payload = {
-        email: userDetails.email,
-        sub: userDetails.id,
-        type: userDetails.type,
-      };
-      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-
-      return {
-        success: true,
-        authorization: {
-          type: 'bearer',
-          access_token: accessToken,
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  // done
-  async revokeRefreshToken(user_id: string) {
-    try {
-      const storedToken = await this.redis.get(`refresh_token:${user_id}`);
-      if (!storedToken) {
-        return {
-          success: false,
-          message: 'Refresh token not found',
-        };
-      }
-
-      await this.redis.del(`refresh_token:${user_id}`);
-
-      return {
-        success: true,
-        message: 'Refresh token revoked successfully',
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  // done
-  async requestEmailChange(user_id: string, email: string) {
-    try {
-      const user = await this.userRepository.getUserDetails(user_id);
-      if (user) {
-        const token = await this.ucodeRepository.createToken({
-          userId: user.id,
-          isOtp: true,
-          email: email,
-        });
-
-        await this.mailService.sendOtpCodeToEmail({
-          email: email,
-          name: email,
-          otp: token,
-        });
-
-        return {
-          success: true,
-          message: 'We have sent an OTP code to your email',
-        };
-      } else {
-        return {
-          success: false,
-          message: 'User not found',
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  // done
-  async changeEmail({
-    user_id,
-    new_email,
-    token,
-  }: {
-    user_id: string;
-    new_email: string;
-    token: string;
-  }) {
-    try {
-      const user = await this.userRepository.getUserDetails(user_id);
-
-      if (user) {
-        const existToken = await this.ucodeRepository.validateToken({
-          email: new_email,
-          token: token,
-          forEmailChange: true,
-        });
-
-        if (existToken) {
-          await this.userRepository.changeEmail({
-            user_id: user.id,
-            new_email: new_email,
-          });
-
-          // delete otp code
-          await this.ucodeRepository.deleteToken({
-            email: new_email,
-            token: token,
-          });
-
-          return {
-            success: true,
-            message: 'Email updated successfully',
-          };
-        } else {
-          return {
-            success: false,
-            message: 'Invalid token',
-          };
-        }
-      } else {
-        return {
-          success: false,
-          message: 'User not found',
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  // done
-  async updateUser(
-    userId: string,
-    updateUserDto: UpdateUserDto,
-    image?: Express.Multer.File,
-  ) {
-    try {
-      const data: any = {};
-      if (updateUserDto.name) {
-        data.name = updateUserDto.name;
-      }
-      if (updateUserDto.first_name) {
-        data.first_name = updateUserDto.first_name;
-      }
-      if (updateUserDto.last_name) {
-        data.last_name = updateUserDto.last_name;
-      }
-      if (updateUserDto.phone_number) {
-        data.phone_number = updateUserDto.phone_number;
-      }
-      if (updateUserDto.country) {
-        data.country = updateUserDto.country;
-      }
-      if (updateUserDto.state) {
-        data.state = updateUserDto.state;
-      }
-      if (updateUserDto.local_government) {
-        data.local_government = updateUserDto.local_government;
-      }
-      if (updateUserDto.city) {
-        data.city = updateUserDto.city;
-      }
-      if (updateUserDto.zip_code) {
-        data.zip_code = updateUserDto.zip_code;
-      }
-      if (updateUserDto.address) {
-        data.address = updateUserDto.address;
-      }
-      if (updateUserDto.gender) {
-        data.gender = updateUserDto.gender;
-      }
-      if (updateUserDto.date_of_birth) {
-        data.date_of_birth = DateHelper.format(updateUserDto.date_of_birth);
-      }
-      if (image) {
-        // delete old image from storage
-        const oldImage = await this.prisma.user.findFirst({
-          where: { id: userId },
-          select: { avatar: true },
-        });
-        if (oldImage.avatar) {
-          await SojebStorage.delete(
-            appConfig().storageUrl.avatar + '/' + oldImage.avatar,
-          );
-        }
-
-        // upload file
-        const fileName = `${StringHelper.randomString()}${image.originalname}`;
-        await SojebStorage.put(
-          appConfig().storageUrl.avatar + '/' + fileName,
-          image.buffer,
-        );
-
-        data.avatar = fileName;
-      }
-      const user = await this.userRepository.getUserDetails(userId);
-      if (user) {
-        await this.prisma.user.update({
-          where: { id: userId },
-          data: {
-            ...data,
-          },
-        });
-
-        return {
-          success: true,
-          message: 'User updated successfully',
-        };
-      } else {
-        return {
-          success: false,
-          message: 'User not found',
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
+  // validate user
   async validateUser(
     email: string,
     pass: string,
@@ -837,83 +614,5 @@ export class AuthService {
     }
   }
 
-  // --------- 2FA ---------
-  async generate2FASecret(user_id: string) {
-    try {
-      return await this.userRepository.generate2FASecret(user_id);
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  async verify2FA(user_id: string, token: string) {
-    try {
-      const isValid = await this.userRepository.verify2FA(user_id, token);
-      if (!isValid) {
-        return {
-          success: false,
-          message: 'Invalid token',
-        };
-      }
-      return {
-        success: true,
-        message: '2FA verified successfully',
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  async enable2FA(user_id: string) {
-    try {
-      const user = await this.userRepository.getUserDetails(user_id);
-      if (user) {
-        await this.userRepository.enable2FA(user_id);
-        return {
-          success: true,
-          message: '2FA enabled successfully',
-        };
-      } else {
-        return {
-          success: false,
-          message: 'User not found',
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  async disable2FA(user_id: string) {
-    try {
-      const user = await this.userRepository.getUserDetails(user_id);
-      if (user) {
-        await this.userRepository.disable2FA(user_id);
-        return {
-          success: true,
-          message: '2FA disabled successfully',
-        };
-      } else {
-        return {
-          success: false,
-          message: 'User not found',
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-  // --------- end 2FA ---------
+  
 }

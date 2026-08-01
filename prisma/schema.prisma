@@ -112,7 +112,8 @@ model User {
   hires                Hire[]
   extensionRequests    ExtensionRequest[]
   deliveries           JobDelivery[]
-  reviews              Review[]
+  reviews              Review[]             @relation("reviewsGiven")
+  reviewsReceived      Review[]             @relation("serviceProviderReviews")
 
   @@map("users")
 }
@@ -361,7 +362,10 @@ model Hire {
 }
 
 model Review {
-  id                    String  @id @default(cuid())
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   rating                Int
   comment               String? @db.VarChar(300)
   communication_quality Int?
@@ -371,16 +375,17 @@ model Review {
 
   attachments Attachment[]
 
-  user_id             String
-  job_id              String?
-  delivery_id         String?
   service_provider_id String
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  service_provider    User   @relation("serviceProviderReviews", fields: [service_provider_id], references: [id])
 
-  user     User         @relation(fields: [user_id], references: [id])
-  job      JOB?         @relation(fields: [job_id], references: [id])
-  delivery JobDelivery? @relation(fields: [delivery_id], references: [id])
+  user_id String
+  user    User   @relation("reviewsGiven", fields: [user_id], references: [id])
+
+  job_id String?
+  job    JOB?    @relation(fields: [job_id], references: [id])
+
+  delivery_id String?
+  delivery    JobDelivery? @relation(fields: [delivery_id], references: [id])
 
   @@map("reviews")
 }

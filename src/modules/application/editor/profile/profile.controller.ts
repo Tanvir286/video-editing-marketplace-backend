@@ -45,7 +45,9 @@ export class ProfileController {
   
   constructor(private readonly profileService: ProfileService) {}
 
-  // *get full profile
+  /*---------------------------------
+            get full profile
+  -----------------------------------*/
   @Get()
   @ApiOperation({
     summary: 'Get full profile',
@@ -87,7 +89,9 @@ export class ProfileController {
   }
 
 
-  // *profile info update 
+  /*------------------------------------
+            profile info update 
+  ------------------------------------*/
   @Patch('profile-info')
   @ApiOperation({
     summary: 'Update basic profile info',
@@ -140,7 +144,9 @@ export class ProfileController {
 
 
 
-  //  * update  about me section
+  /*------------------------------------
+       update  about me section
+  ------------------------------------*/
   @Patch('about-me')
   @ApiOperation({
     summary: 'Update about me',
@@ -176,9 +182,9 @@ export class ProfileController {
     return await this.profileService.updateAbout(userId, updateAboutDto);
   }
 
-  // topic:protfile 
-
-  // *create portfolio
+  /*------------------------------------
+            profile info update 
+  ------------------------------------*/
   @Post('portfolio')
   @ApiOperation({
     summary: 'Create portfolio',
@@ -237,7 +243,9 @@ export class ProfileController {
     );
   }
 
-  // *update portfolio
+  /*------------------------------------
+            update portfolio
+  ------------------------------------*/
   @Patch('portfolio/:id')
   @ApiOperation({
     summary: 'Update portfolio',
@@ -293,7 +301,9 @@ export class ProfileController {
     );
   }
 
-  // *delete portfolio
+  /*------------------------------------
+            delete portfolio
+  ------------------------------------*/
   @Delete('portfolio/:id')
   @ApiOperation({
     summary: 'Delete portfolio',
@@ -317,9 +327,13 @@ export class ProfileController {
     return await this.profileService.deletePortfolio(userId, id);
   }
 
-  // topic:education
+  /*------------------------------------
+            education
+  ------------------------------------*/
 
-  // *create education
+   /*------------------------------------
+          create  education
+  ------------------------------------*/
   @Post('education')
   @ApiOperation({
     summary: 'Create education',
@@ -361,7 +375,9 @@ export class ProfileController {
       createEducationDto);
   }
   
-  // *update education
+   /*------------------------------------
+          update  education
+  ------------------------------------*/
   @Patch('education/:id')
   @ApiOperation({
     summary: 'Update education',
@@ -407,7 +423,11 @@ export class ProfileController {
     );
   }
 
-  //* Delete education
+
+
+  /*------------------------------------
+            delete education
+  ------------------------------------*/
   @Delete('education/:id')
   @ApiOperation({
     summary: 'Delete education',
@@ -432,9 +452,13 @@ export class ProfileController {
   }
 
 
-  // topic:skills
+  /*------------------------------------
+            skills
+  ------------------------------------*/
 
-  // get all skills
+  /*------------------------------------
+            get skills
+  ------------------------------------*/
   @Get('skills')
   @ApiOperation({
     summary: 'Get skills',
@@ -462,7 +486,10 @@ export class ProfileController {
     return await this.profileService.getSkills(userId);
   }
 
-  // *add skills
+
+  /*------------------------------------
+            add skills
+  ------------------------------------*/
   @Post('skills')
   @ApiOperation({
     summary: 'Create skill',
@@ -498,7 +525,9 @@ export class ProfileController {
     return await this.profileService.createSkills(userId, createSkillDto);
   }
 
-  // *update skills
+  /*------------------------------------
+            update skills
+  ------------------------------------*/
   @Patch('skills/:id')
   @ApiOperation({
     summary: 'Update skill',
@@ -534,7 +563,21 @@ export class ProfileController {
     const userId = req.user.userId;
     return await this.profileService.updateSkills(userId, id, updateSkillDto);
   } 
-
+ 
+  /*------------------------------------
+            Review
+  ------------------------------------*/
+  @Get('reviews_summary')
+  @ApiOperation({
+    summary: 'Get reviews summary ✧',
+    description: 'Retrieve a summary of reviews for the editor profile.',
+  })
+ async getReviewsSummary(
+    @Req() req: any,
+  ) {
+    const userId = req.user.userId;
+    return await this.profileService.getReviewsSummary(userId);
+  }
 
 
 
