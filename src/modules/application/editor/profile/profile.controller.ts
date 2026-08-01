@@ -579,10 +579,17 @@ export class ProfileController {
     return await this.profileService.getReviewsSummary(userId);
   }
 
-
-
-
-
+  @Get('reviews_list')
+  @ApiOperation({
+    summary: 'Get reviews list ✧',
+    description: 'Retrieve the list of reviews for the editor profile.',
+  })
+  async getReviewsList(
+    @Req() req: any,
+  ) {
+    const userId = req.user.userId;
+    return await this.profileService.getReviewsList(userId);
+  }
 
 
 

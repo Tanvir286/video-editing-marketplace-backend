@@ -548,6 +548,11 @@ export class ProfileService {
     };
   }
 
+  /*------------------------------------
+            Review
+   ------------------------------------*/
+  
+
   // *reviews summary
   async getReviewsSummary(userId: string) {
     const reviewCounts = await this.prisma.review.groupBy({
@@ -587,9 +592,10 @@ export class ProfileService {
   }
   
 
-   /*------------------------------------
-            Review
-   ------------------------------------*/
+   // *get all reviews
+  async getReviewsList(userId: string) {
+   
+  } 
   
 
 
