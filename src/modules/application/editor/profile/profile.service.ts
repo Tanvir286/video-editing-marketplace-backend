@@ -591,12 +591,68 @@ export class ProfileService {
     };
   }
   
-
    // *get all reviews
   async getReviewsList(userId: string) {
-   
-  } 
-  
+    const reviews = await this.prisma.review.findMany({
+      where: { service_provider_id: userId },
+      orderBy: { created_at: 'desc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            country: true,
+          },
+        },
+        job: {
+          select: {
+            id: true,
+            job_title: true,
+            job_photo: true,
+            bids: {
+              where: {
+                user_id: userId,
+                status: BidStatus.ACCEPTED,
+              },
+              select: {
+                id: true,
+                amount: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
+    const formattedReviews = reviews.map((review) => ({
+      id: review.id,
+      created_at: review.created_at,
+      reviwer_name: review.user?.name,
+      reviwer_avatar: review.user?.avatar
+        ? SojebStorage.url(`${appConfig().storageUrl.avatar}/${review.user.avatar}`)
+        : null,
+      reviwer_country: review.user?.country,
+      rating: review.rating,
+      comment: review.comment,
 
+      job: review.job
+        ? {
+            id: review.job.id,
+            title: review.job.job_title,
+            job_photo: review.job.job_photo,
+            job_photo_url: review.job.job_photo
+              ? SojebStorage.url(`${appConfig().storageUrl.jobPhoto}/${review.job.job_photo}`)
+              : null,
+            bid_amount: review.job.bids.length > 0 ? review.job.bids[0].amount : null,
+          }
+        : null,
+    }));
+
+    return {
+      success: true,
+      message: 'Reviews list retrieved successfully',
+      data: formattedReviews,
+    };
+  }
 }

@@ -572,7 +572,7 @@ export class ProfileController {
     summary: 'Get reviews summary ✧',
     description: 'Retrieve a summary of reviews for the editor profile.',
   })
- async getReviewsSummary(
+  async getReviewsSummary(
     @Req() req: any,
   ) {
     const userId = req.user.userId;
