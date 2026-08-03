@@ -263,27 +263,33 @@ enum SoftwarePreference {
 
 model JOB {
   id               String        @id @default(cuid())
-  job_title        String?
-  job_description  String?
-  job_photo        String?
-  content_length   ContentLength
-  project_budget   Float?
-  job_category     JobCategory
-  project_duration Float?
-  platform         Platform
-  skill            String?
-  reference        String?
-  total_payment    Float?
-  fileId           String?
-  status           JobStatus     @default(PENDING)
   created_at       DateTime      @default(now())
   updated_at       DateTime      @updatedAt
   deleted_at       DateTime?
-  started_at       DateTime?
-  deadline         DateTime?
 
+  job_title        String?
+  job_description  String?
+  job_photo        String?
+  job_category     JobCategory
+  job_skill            String?
+  job_budget   Float
+  job_duration Float?
+  job_content_length   ContentLength
+  job_platform         Platform
+
+
+  job_total_payment    Float?
+  job_status           JobStatus     @default(PENDING)
+
+  // attachment and reference files
+  job_style_reference String?
+  job_pdf              String?
+  job_documentation     String?
+  
+  job_startedat       DateTime?
+  job_deadline         DateTime?
+  
   bids              Bid[]
-  attachment        Attachment[]
   deliveries        JobDelivery[]
   extensionRequests ExtensionRequest[]
   reviews           Review[]
@@ -630,7 +636,6 @@ model Attachment {
   file_alt String?
 
   messages   Message[]
-  jobs       JOB[]
   hire       Hire?        @relation(fields: [hire_id], references: [id])
   hire_id    String?
   review     Review?      @relation(fields: [reviewId], references: [id])
