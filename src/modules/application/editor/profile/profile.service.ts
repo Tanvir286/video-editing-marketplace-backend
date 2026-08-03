@@ -75,7 +75,7 @@ export class ProfileService {
                   status: BidStatus.ACCEPTED,
                 },
               },
-              status: JobStatus.COMPLETED,
+              job_status: JobStatus.COMPLETED,
             },
             include: {
               user: {
@@ -126,7 +126,7 @@ export class ProfileService {
     const formattedBiddedJobs = completedBiddedJobs.map((job) => ({
       id: job.id,
       type: 'BIDDED_JOB',
-      status: job.status,
+      status: job.job_status,
       completed_at: job.updated_at,
     }));
 

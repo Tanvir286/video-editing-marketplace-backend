@@ -65,10 +65,10 @@ export class JobsService {
           id: true,
           created_at: true,
           job_title: true,
-          project_budget: true,
-          project_duration: true,
-          total_payment: true,
-          status: true,
+          job_budget: true,
+          job_duration: true,
+          job_total_payment: true,
+          job_status: true,
           job_photo: true,
           user: true,
           bids: {
@@ -101,7 +101,7 @@ export class JobsService {
       project_title: job.job_title,
       total_amount: job.bids[0]?.amount || 0,
       photo: job.job_photo ? ImageGetUtil.jobPhotoUrl(job.job_photo) : null,
-      status: job.status,
+      status: job.job_status,
       type: 'BIDDED_JOB',
     }));
 

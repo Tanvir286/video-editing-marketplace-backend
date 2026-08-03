@@ -176,6 +176,78 @@ export class AuthController {
     }
   }
 
+  @ApiOperation({
+    summary: 'Refresh token',
+    description: 'Refresh an access token using a refresh token.',
+  })
+  @Post('refresh-token')
+  async refreshToken(@Req() req: Request, @Body() body: { refresh_token?: string }) {
+    return this.authService.refreshToken(req.user?.userId, body.refresh_token);
+  }
+
+  @ApiOperation({
+    summary: 'Logout',
+    description: 'Invalidate the current refresh token for the authenticated user.',
+  })
+  @Post('logout')
+  async logout(@Req() req: Request) {
+    return this.authService.logout(req.user?.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Request email change',
+    description: 'Start the email change flow for the authenticated user.',
+  })
+  @Post('request-email-change')
+  async requestEmailChange(@Req() req: Request, @Body() body: { email?: string }) {
+    return this.authService.requestEmailChange(req.user?.userId, body.email);
+  }
+
+  @ApiOperation({
+    summary: 'Change email',
+    description: 'Complete the email change flow for the authenticated user.',
+  })
+  @Post('change-email')
+  async changeEmail(@Req() req: Request, @Body() body: { email?: string; token?: string }) {
+    return this.authService.changeEmail(req.user?.userId, body.email, body.token);
+  }
+
+  @ApiOperation({
+    summary: 'Generate 2FA secret',
+    description: 'Generate a two-factor authentication secret for the authenticated user.',
+  })
+  @Post('2fa/generate')
+  async generate2FASecret(@Req() req: Request) {
+    return this.authService.generate2FASecret(req.user?.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Verify 2FA token',
+    description: 'Verify a two-factor authentication token for the authenticated user.',
+  })
+  @Post('2fa/verify')
+  async verify2FA(@Req() req: Request, @Body() body: { token?: string }) {
+    return this.authService.verify2FA(req.user?.userId, body.token);
+  }
+
+  @ApiOperation({
+    summary: 'Enable 2FA',
+    description: 'Enable two-factor authentication for the authenticated user.',
+  })
+  @Post('2fa/enable')
+  async enable2FA(@Req() req: Request) {
+    return this.authService.enable2FA(req.user?.userId);
+  }
+
+  @ApiOperation({
+    summary: 'Disable 2FA',
+    description: 'Disable two-factor authentication for the authenticated user.',
+  })
+  @Post('2fa/disable')
+  async disable2FA(@Req() req: Request) {
+    return this.authService.disable2FA(req.user?.userId);
+  }
+
   // login user
   @ApiOperation({
     summary: 'Login',

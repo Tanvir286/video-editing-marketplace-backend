@@ -19,7 +19,7 @@ export class DashboardService {
             status: BidStatus.ACCEPTED,
           },
         },
-        status: 'IN_PROGRESS',
+        job_status: 'IN_PROGRESS',
       },
     });
 
@@ -107,12 +107,12 @@ export class DashboardService {
     const formattedBiddedJobs = allBiddedJobs.map((job) => ({
       id: job.id,
       project_title: job.job_title,
-      project_budget: job.project_budget,
-      project_duration: job.project_duration
-        ? `${job.project_duration} Days`
+      project_budget: job.job_budget,
+      project_duration: job.job_duration
+        ? `${job.job_duration} Days`
         : 'N/A',
-      total_amount: job.total_payment,
-      status: job.status,
+      total_amount: job.job_total_payment,
+      status: job.job_status,
       type: 'BIDDED_JOB',
       photo: job.job_photo,
       client: job.user,

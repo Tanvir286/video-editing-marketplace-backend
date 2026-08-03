@@ -39,7 +39,7 @@ export class ExtensionService {
     }
 
     // 3. Status Check: Job must be IN_PROGRESS
-    if (job.status !== 'IN_PROGRESS') {
+    if (job.job_status !== 'IN_PROGRESS') {
       throw new BadRequestException(
         'Extensions can only be requested for jobs currently in progress',
       );
@@ -64,7 +64,7 @@ export class ExtensionService {
         job_id: jobId,
         message: dto.message,
         extension_days: dto.extension_days,
-        original_date: job.deadline,
+        original_date: job.job_deadline,
         user_id: userId,
       },
     });
@@ -110,7 +110,7 @@ async processRequest(
 
         await tx.jOB.update({
           where: { id: request.job_id },
-          data: { deadline: new_deadline },
+          data: { job_deadline: new_deadline },
         });
 
         // B. Update Bid Duration (req_date)

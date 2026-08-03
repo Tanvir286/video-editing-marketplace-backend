@@ -36,7 +36,7 @@ export class JobService {
     };
 
     if (paginationDto?.status) {
-      jobWhere.status = paginationDto.status;
+      jobWhere.job_status = paginationDto.status;
       hireWhere.status = paginationDto.status;
     }
 
@@ -50,9 +50,9 @@ export class JobService {
           id: true,
           job_title: true,
           job_photo: true,
-          project_duration: true,
-          deadline: true,
-          status: true,
+          job_duration: true,
+          job_deadline: true,
+          job_status: true,
           created_at: true,
           user: {
             select: {
@@ -103,10 +103,10 @@ export class JobService {
         job_title: job.job_title,
         job_photo: job.job_photo,
         job_photo_url: ImageGetUtil.jobPhotoUrl(job.job_photo),
-        project_duration: job.project_duration,
-        status: job.status,
+        project_duration: job.job_duration,
+        status: job.job_status,
         bid: job.bids?.[0]?.amount ?? null,
-        deadline: job.deadline,
+        deadline: job.job_deadline,
         format:"job",
       };
     });
@@ -177,18 +177,18 @@ export class JobService {
     console.log(editorSkills, editorId);
 
     const jobs = await this.prisma.jOB.findMany({
-      where: { status: JobStatus.PENDING },
+      where: { job_status: JobStatus.PENDING },
       orderBy: { created_at: 'desc' },
       select: {
         id: true,
         job_title: true,
         job_description: true,
-        total_payment: true,
-        project_duration: true,
-        status: true,
+        job_total_payment: true,
+        job_duration: true,
+        job_status: true,
         created_at: true,
-        skill: true,
-        deadline: true,
+        job_skill: true,
+        job_deadline: true,
         job_photo: true,
         user: {
           select: {
@@ -213,12 +213,12 @@ export class JobService {
         `${job.user?.first_name ?? ''} ${job.user?.last_name ?? ''}`.trim(),
       user_photo: job.user?.avatar,
       user_photo_url: ImageGetUtil.avatarUrl(job.user?.avatar),
-      skill: job.skill,
+      skill: job.job_skill,
       exprience: job.user?.created_at ?? null,
       location: job.user?.country ?? null,
-      total_payment: job.total_payment,
-      project_duration: job.project_duration,
-      match_percentage: calculateSkillMatch(job.skill, editorSkills),
+      total_payment: job.job_total_payment,
+      project_duration: job.job_duration,
+      match_percentage: calculateSkillMatch(job.job_skill, editorSkills),
     }));
 
     formattedAndMatchedJobs.sort(
@@ -251,7 +251,7 @@ export class JobService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.JOBWhereInput = {
-      status: JobStatus.PENDING,
+      job_status: JobStatus.PENDING,
     };
 
     const [total, jobs] = await this.prisma.$transaction([
@@ -266,10 +266,10 @@ export class JobService {
         select: {
           id: true,
           job_title: true,
-          total_payment: true,
-          project_duration: true,
-          status: true,
-          skill: true,
+          job_total_payment: true,
+          job_duration: true,
+          job_status: true,
+          job_skill: true,
           job_photo: true,
           user: {
             select: {
@@ -288,12 +288,12 @@ export class JobService {
     const formatData = jobs.map((job) => ({
       id: job.id,
       job_title: job.job_title,
-      total_payment: job.total_payment,
-      project_duration: job.project_duration,
-      status: job.status,
+      total_payment: job.job_total_payment,
+      project_duration: job.job_duration,
+      status: job.job_status,
       job_photo: job.job_photo,
       job_photo_url: ImageGetUtil.jobPhoto(job.job_photo),
-      skill: job.skill,
+      skill: job.job_skill,
       user_name: job.user?.first_name ?? null,
       user_location: job.user?.country ?? null,
       user_photo: job.user?.avatar ?? null,
@@ -330,18 +330,18 @@ export class JobService {
         job_description: true,
         job_photo: true,
         job_category: true,
-        project_budget: true,
-        platform: true,
-        project_duration: true,
-        skill: true,
-        content_length: true,
-        reference: true,
-        total_payment: true,
-        status: true,
+        job_budget: true,
+        job_platform: true,
+        job_duration: true,
+        job_skill: true,
+        job_content_length: true,
+        job_style_reference: true,
+        job_total_payment: true,
+        job_status: true,
         created_at: true,
         updated_at: true,
-        deadline: true,
-        started_at: true,
+        job_deadline: true,
+        job_startedat: true,
         user: {
           select: {
             id: true,
@@ -379,15 +379,6 @@ export class JobService {
             rating: true,
           },
         },
-        attachment: {
-          select: {
-            id: true,
-            name: true,
-            file: true,
-            type: true,
-            created_at: true,
-          },
-        },
       },
     });
 
@@ -395,7 +386,8 @@ export class JobService {
       throw new NotFoundException(`Job with ID ${jobId} not found`);
     }
 
-    const attachmentsCount = job.attachment.length;
+    const jobData = job as any;
+    const attachmentsCount = jobData.attachments?.length ?? 0;
 
     return {
       success: true,
@@ -403,15 +395,15 @@ export class JobService {
       data: {
         id: job.id,
         job_category: job.job_category,
-        project_budget: job.project_budget,
-        platform: job.platform,
-        project_duration: job.project_duration,
-        country: job.user?.country ?? null,
-        job_title: job.job_title,
-        job_description: job.job_description,
-        job_photo_url: ImageGetUtil.jobPhotoUrl(job.job_photo),
-        skill: job.skill,
-        attachment: job.attachment.map((item) => ({
+        project_budget: jobData.job_budget,
+        platform: jobData.job_platform,
+        project_duration: jobData.job_duration,
+        country: jobData.user?.country ?? null,
+        job_title: jobData.job_title,
+        job_description: jobData.job_description,
+        job_photo_url: ImageGetUtil.jobPhotoUrl(jobData.job_photo),
+        skill: jobData.job_skill,
+        attachment: (jobData.attachments ?? []).map((item: any) => ({
           id: item.id,
           name: item.name,
           file: item.file,
@@ -419,7 +411,7 @@ export class JobService {
           created_at: item.created_at,
         })),
         attachment_count: attachmentsCount,
-        bids: job.bids.map((bid) => ({
+        bids: (jobData.bids ?? []).map((bid: any) => ({
           id: bid.id,
           status: bid.status,
           message: bid.message,
@@ -431,10 +423,10 @@ export class JobService {
         })),
         buyer_info: {
           user_name:
-            `${job.user?.first_name ?? ''} ${job.user?.last_name ?? ''}`.trim(),
-          user_photo_url: ImageGetUtil.avatarUrl(job.user?.avatar),
-          user_location: job.user?.country ?? null,
-          user_language: job.user?.language ?? null,
+            `${jobData.user?.first_name ?? ''} ${jobData.user?.last_name ?? ''}`.trim(),
+          user_photo_url: ImageGetUtil.avatarUrl(jobData.user?.avatar),
+          user_location: jobData.user?.country ?? null,
+          user_language: jobData.user?.language ?? null,
         },
       },
     };

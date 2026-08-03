@@ -316,13 +316,13 @@ export class SeedCommand extends CommandRunner {
         data: {
           job_title: `Professional Video Editor Needed for ${platform} - Project ${i}`,
           job_description: `We are looking for an experienced video editor to work on a ${jobCategory.toLowerCase().replace(/_/g, ' ')} project. The content length will be around ${contentLength}. Need professional coloring and sound design.`,
-          content_length: contentLength,
-          project_budget: parseFloat((100 + i * 50).toFixed(2)),
+          job_content_length: contentLength,
+          job_budget: parseFloat((100 + i * 50).toFixed(2)),
           job_category: jobCategory,
-          project_duration: parseFloat((3 + i).toFixed(1)),
-          platform: platform,
-          skill: skillText,
-          status: status,
+          job_duration: parseFloat((3 + i).toFixed(1)),
+          job_platform: platform,
+          job_skill: skillText,
+          job_status: status,
           user_id: client.id,
         },
       });
@@ -332,10 +332,10 @@ export class SeedCommand extends CommandRunner {
       for (let j = 0; j < 4; j++) {
         const editor = i <= 6 && j === 0 ? editors[0] : editors[(i - 1 + j) % editors.length];
         const bidAmount = parseFloat(
-          (job.project_budget * (0.8 + j * 0.1)).toFixed(2),
+          (job.job_budget * (0.8 + j * 0.1)).toFixed(2),
         );
         const bidDuration = parseFloat(
-          (job.project_duration * (0.8 + j * 0.1)).toFixed(1),
+          (job.job_duration * (0.8 + j * 0.1)).toFixed(1),
         );
 
         let bidStatus: BidStatus = BidStatus.PENDING;
@@ -375,7 +375,7 @@ export class SeedCommand extends CommandRunner {
       const assignedEditor = i < 3 ? editors[0] : editors[i % editors.length];
 
       // Create accepted deliveries only for COMPLETED jobs
-      if (job.status === JobStatus.COMPLETED) {
+      if (job.job_status === JobStatus.COMPLETED) {
         const delivery = await this.prisma.jobDelivery.create({
           data: {
             job_id: job.id,
@@ -436,7 +436,7 @@ export class SeedCommand extends CommandRunner {
       const matchingDelivery = deliveries.find((d) => d.job_id === job.id);
 
       // Reviews should ideally exist for COMPLETED jobs
-      if (clientId && assignedEditor && job.status === JobStatus.COMPLETED) {
+      if (clientId && assignedEditor && job.job_status === JobStatus.COMPLETED) {
         await this.prisma.review.create({
           data: {
             rating: i % 4 === 0 ? 4 : 5,

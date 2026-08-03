@@ -226,6 +226,92 @@ export class AuthService {
     }
   }
 
+  async refreshToken(userId: string, refreshToken?: string) {
+    try {
+      if (!userId) {
+        return { success: false, message: 'User not found' };
+      }
+
+      const storedRefreshToken = await this.redis.get(`refresh_token:${userId}`);
+      if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
+        return { success: false, message: 'Invalid refresh token' };
+      }
+
+      const user = await this.userRepository.getUserDetails(userId);
+      const payload = { email: user?.email, sub: userId, type: user?.type };
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+
+      return {
+        success: true,
+        authorization: { access_token: accessToken },
+      };
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  async logout(userId: string) {
+    try {
+      if (!userId) {
+        return { success: false, message: 'User not found' };
+      }
+
+      await this.redis.del(`refresh_token:${userId}`);
+      return { success: true, message: 'Logged out successfully' };
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  async requestEmailChange(userId: string, email?: string) {
+    try {
+      if (!email) {
+        return { success: false, message: 'Email is required' };
+      }
+
+      await this.userRepository.changeEmail({ user_id: userId, new_email: email });
+      return { success: true, message: 'Email change requested successfully' };
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  async changeEmail(userId: string, email?: string, token?: string) {
+    try {
+      if (!email || !token) {
+        return { success: false, message: 'Email and token are required' };
+      }
+
+      await this.userRepository.changeEmail({ user_id: userId, new_email: email });
+      return { success: true, message: 'Email changed successfully' };
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  async generate2FASecret(userId: string) {
+    return this.userRepository.generate2FASecret(userId);
+  }
+
+  async verify2FA(userId: string, token?: string) {
+    if (!token) {
+      return { success: false, message: 'Token is required' };
+    }
+
+    const isValid = await this.userRepository.verify2FA(userId, token);
+    return { success: isValid, message: isValid ? '2FA verified' : 'Invalid 2FA token' };
+  }
+
+  async enable2FA(userId: string) {
+    const result = await this.userRepository.enable2FA(userId);
+    return { success: true, data: result };
+  }
+
+  async disable2FA(userId: string) {
+    const result = await this.userRepository.disable2FA(userId);
+    return { success: true, data: result };
+  }
+
   // login
   async login({ email, userId }) {
     try {
