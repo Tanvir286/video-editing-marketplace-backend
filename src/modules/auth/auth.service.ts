@@ -27,7 +27,9 @@ export class AuthService {
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
-  // me
+  /*-----------------------------------------------
+                 get user details
+  -----------------------------------------------*/
   async me(userId: string) {
     try {
       const user = await this.prisma.user.findFirst({
@@ -80,7 +82,9 @@ export class AuthService {
     }
   }
 
-  // register
+  /*-----------------------------------------------
+                 register user
+  -----------------------------------------------*/
   async register({
     name,
     email,
@@ -165,7 +169,9 @@ export class AuthService {
     }
   }
 
-  // update user profile
+  /*-----------------------------------------------
+                 update user profile
+  -----------------------------------------------*/
   async updateUser(
     userId: string,
     updateUserDto: UpdateUserDto,
@@ -226,13 +232,57 @@ export class AuthService {
     }
   }
 
+  /*-----------------------------------------------
+                 login user
+  -----------------------------------------------*/
+  async login({ email, userId }) {
+    try {
+      const user = await this.userRepository.getUserDetails(userId);
+
+      const payload = { email: email, sub: userId, type: user?.type };
+
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+      // store refreshToken
+      await this.redis.set(
+        `refresh_token:${user.id}`,
+        refreshToken,
+        'EX',
+        60 * 60 * 24 * 7, // 7 days in seconds
+      );
+
+      return {
+        success: true,
+        message: 'Logged in successfully',
+        authorization: {
+          type: 'bearer',
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        },
+        type: user.type,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  /*-----------------------------------------------
+                other auth operations
+  -----------------------------------------------*/
+
   async refreshToken(userId: string, refreshToken?: string) {
     try {
       if (!userId) {
         return { success: false, message: 'User not found' };
       }
 
-      const storedRefreshToken = await this.redis.get(`refresh_token:${userId}`);
+      const storedRefreshToken = await this.redis.get(
+        `refresh_token:${userId}`,
+      );
       if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
         return { success: false, message: 'Invalid refresh token' };
       }
@@ -269,7 +319,10 @@ export class AuthService {
         return { success: false, message: 'Email is required' };
       }
 
-      await this.userRepository.changeEmail({ user_id: userId, new_email: email });
+      await this.userRepository.changeEmail({
+        user_id: userId,
+        new_email: email,
+      });
       return { success: true, message: 'Email change requested successfully' };
     } catch (error: any) {
       return { success: false, message: error.message };
@@ -282,7 +335,10 @@ export class AuthService {
         return { success: false, message: 'Email and token are required' };
       }
 
-      await this.userRepository.changeEmail({ user_id: userId, new_email: email });
+      await this.userRepository.changeEmail({
+        user_id: userId,
+        new_email: email,
+      });
       return { success: true, message: 'Email changed successfully' };
     } catch (error: any) {
       return { success: false, message: error.message };
@@ -299,7 +355,10 @@ export class AuthService {
     }
 
     const isValid = await this.userRepository.verify2FA(userId, token);
-    return { success: isValid, message: isValid ? '2FA verified' : 'Invalid 2FA token' };
+    return {
+      success: isValid,
+      message: isValid ? '2FA verified' : 'Invalid 2FA token',
+    };
   }
 
   async enable2FA(userId: string) {
@@ -310,42 +369,6 @@ export class AuthService {
   async disable2FA(userId: string) {
     const result = await this.userRepository.disable2FA(userId);
     return { success: true, data: result };
-  }
-
-  // login
-  async login({ email, userId }) {
-    try {
-      const user = await this.userRepository.getUserDetails(userId);
-
-      const payload = { email: email, sub: userId, type: user?.type };
-
-      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-      // store refreshToken
-      await this.redis.set(
-        `refresh_token:${user.id}`,
-        refreshToken,
-        'EX',
-        60 * 60 * 24 * 7, // 7 days in seconds
-      );
-
-      return {
-        success: true,
-        message: 'Logged in successfully',
-        authorization: {
-          type: 'bearer',
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        },
-        type: user.type,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
   }
 
   // forgot password
@@ -699,6 +722,4 @@ export class AuthService {
       // };
     }
   }
-
-  
 }

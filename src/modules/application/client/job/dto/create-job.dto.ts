@@ -5,69 +5,74 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Min,
 } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ContentLength, JobCategory, Platform } from 'prisma/generated';
 
 export class ClientCreateJobDto {
-  @ApiPropertyOptional({ description: 'Job title', example: 'Need a landing page' })
+  @ApiPropertyOptional({
+    description: 'Job title',
+    example: 'Need a video editor for YouTube shorts',
+  })
   @IsOptional()
   @IsString()
   job_title?: string;
 
-  @ApiPropertyOptional({ description: 'Job description', example: 'Create a modern landing page' })
+  @ApiPropertyOptional({
+    description: 'Detailed job description',
+    example: 'We need a professional editor for a short-form video campaign.',
+  })
   @IsOptional()
   @IsString()
   job_description?: string;
 
-  @ApiPropertyOptional({ description: 'Job photo URL or filename', example: 'job-photo.jpg' })
-  @IsOptional()
-  @IsString()
-  job_photo?: string;
-
-  @ApiPropertyOptional({ description: 'Content length', enum: ContentLength, example: ContentLength.MIN_1_5 })
-  @IsEnum(ContentLength)
-  content_length: ContentLength;
-
-  @ApiPropertyOptional({ description: 'Project budget', example: 500 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  project_budget?: number;
-
-  @ApiPropertyOptional({ description: 'Job category', enum: JobCategory, example: JobCategory.LONG_FORM_VIDEO })
+  @ApiProperty({
+    description: 'Job category',
+    enum: JobCategory,
+    example: JobCategory.SHORTS_REELS_TIKTOKS,
+  })
   @IsEnum(JobCategory)
   job_category: JobCategory;
 
-  @ApiPropertyOptional({ description: 'Project duration in days', example: 7 })
+  @ApiPropertyOptional({
+    description: 'Skills required for the job',
+    example: 'Adobe Premiere Pro, After Effects',
+  })
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  project_duration?: number;
+  @IsString()
+  job_skill?: string;
 
-  @ApiPropertyOptional({ description: 'Platform', enum: Platform, example: Platform.YOUTUBE })
+  @ApiProperty({
+    description: 'Budget for the job',
+    example: 500,
+    minimum: 1,
+  })
+  @IsNumber()
+  @Min(1)
+  job_budget: number;
+
+  @ApiPropertyOptional({
+    description: 'Estimated project duration in days',
+    example: 7,
+  })
+  @IsOptional()
+  @IsNumber()
+  job_duration?: number;
+
+  @ApiProperty({
+    description: 'Expected content length',
+    enum: ContentLength,
+    example: ContentLength.MIN_5_10,
+  })
+  @IsEnum(ContentLength)
+  job_content_length: ContentLength;
+
+  @ApiProperty({
+    description: 'Target platform',
+    enum: Platform,
+    example: Platform.YOUTUBE,
+  })
   @IsEnum(Platform)
-  platform: Platform;
-
-  @ApiPropertyOptional({ description: 'Skills required', example: 'NestJS, React' })
-  @IsOptional()
-  @IsString()
-  skill?: string;
-
-  @ApiPropertyOptional({ description: 'Reference link or note', example: 'https://example.com/reference' })
-  @IsOptional()
-  @IsString()
-  reference?: string;
-
-  @ApiPropertyOptional({ description: 'Total payment amount', example: 1000 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  total_payment?: number;
-
-  @ApiPropertyOptional({ description: 'Attachment IDs', example: ['att-1', 'att-2'], type: [String] })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  attachments?: string[];
+  job_platform: Platform;
 }

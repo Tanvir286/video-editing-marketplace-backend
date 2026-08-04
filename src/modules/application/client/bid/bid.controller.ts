@@ -1,36 +1,69 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { BidService } from './bid.service';
-import { CreateBidDto } from './dto/create-bid.dto';
-import { UpdateBidDto } from './dto/update-bid.dto';
-import { ApiExcludeController } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { USER_TYPES } from 'src/common/swagger/swagger-auth';
+import { BidClientPaginationDto } from './dto/bid-pagination.dto';
+import { PaginationDto } from 'src/common/pagination/pagination.dto';
 
-@ApiExcludeController()
+@ApiTags('🏴 Client Bids')
+@ApiBearerAuth(USER_TYPES.CLIENT)
 @Controller('bid')
+@UseGuards(JwtAuthGuard)
 export class BidController {
   constructor(private readonly bidService: BidService) {}
 
-  @Post()
-  create(@Body() createBidDto: CreateBidDto) {
-    return this.bidService.create(createBidDto);
+  /*------------------------------------------
+          all job proposal list
+  ------------------------------------------*/
+  @Get('alljob-proposal')
+  @ApiOperation({
+    summary: 'Get all proposals for my jobs 🔯🔯🔯',
+    description:
+      'Returns all bids submitted on jobs created by the authenticated client.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Proposal list retrieved successfully',
+  })
+  async getAllJobProposal(
+    @Req() req: any,
+    @Query() paginationDto: BidClientPaginationDto,
+  ) {
+    const userId = req.user.userId;
+    return this.bidService.getAllJobProposal(paginationDto, userId);
   }
 
-  @Get()
-  findAll() {
-    return this.bidService.findAll();
+ /*------------------------------------------
+           Job ID with proposal list
+  ------------------------------------------*/
+  @Get('job/:jobId/proposal')
+  @ApiOperation({
+    summary: 'Get proposals for a specific job',
+    description: 'Returns all bids submitted for a specific job.',
+  })
+  @ApiParam({
+    name: 'jobId',
+    required: true,
+    description: 'Job ID created by the authenticated client',
+  })
+  async getJobProposal(
+    @Req() req: any,
+    @Query() paginationDto: PaginationDto,
+    @Param('jobId') jobId: string,
+  ) {
+    const userId = req.user.userId;
+    return this.bidService.getJobProposalbyId(paginationDto, userId, jobId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bidService.findOne(+id);
-  }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBidDto: UpdateBidDto) {
-    return this.bidService.update(+id, updateBidDto);
-  }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bidService.remove(+id);
-  }
+
 }

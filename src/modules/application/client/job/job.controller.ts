@@ -32,8 +32,9 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { USER_TYPES } from 'src/common/swagger/swagger-auth';
-import { JobStatus } from 'prisma/generated';
+import { ContentLength, JobCategory, JobStatus, Platform } from 'prisma/generated';
 import { ClientJobPaginationDto } from './dto/pagination-job.dto';
+import { memoryStorage } from 'multer';
 
 @ApiTags('🏴 Client Job Management')
 @ApiBearerAuth(USER_TYPES.CLIENT)
@@ -89,69 +90,102 @@ export class JobsController {
   ----------------------------------------*/
   @Post()
   @ApiOperation({
-    summary: 'Create a job',
-    description:
-      'Create a job with one or more attachment files and an optional job photo.',
+    summary: 'Create a job ✪✪✪',
+    description: 'Create a new client job with optional photo and document uploads.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
+    description: 'Job creation payload',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(ClientCreateJobDto) },
-        {
-          type: 'object',
-          properties: {
-            attachment: {
-              type: 'array',
-              items: { type: 'string', format: 'binary' },
-              description: 'Attachment files (at least 1 required)',
-            },
-            job_photo: {
-              type: 'string',
-              format: 'binary',
-              description: 'Optional job photo',
-            },
-          },
+      type: 'object',
+      properties: {
+        job_title: {
+          type: 'string',
+          example: 'Need a video editor for YouTube shorts',
         },
-      ],
+        job_description: {
+          type: 'string',
+          example: 'We need a professional editor for a short-form video campaign.',
+        },
+        job_category: {
+          type: 'string',
+          enum: Object.values(JobCategory),
+          example: JobCategory.SHORTS_REELS_TIKTOKS,
+        },
+        job_skill: {
+          type: 'string',
+          example: 'Adobe Premiere Pro, After Effects',
+        },
+        job_budget: {
+          type: 'number',
+          example: 500,
+          minimum: 1,
+        },
+        job_duration: {
+          type: 'number',
+          example: 7,
+        },
+        job_content_length: {
+          type: 'string',
+          enum: Object.values(ContentLength),
+          example: ContentLength.MIN_5_10,
+        },
+        job_platform: {
+          type: 'string',
+          enum: Object.values(Platform),
+          example: Platform.YOUTUBE,
+        },
+        job_photo: {
+          type: 'string',
+          format: 'binary',
+        },
+        style: {
+          type: 'string',
+          format: 'binary',
+        },
+        pdf: {
+          type: 'string',
+          format: 'binary',
+        },
+        doc: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
     },
   })
   @ApiResponse({ status: 201, description: 'Job created successfully' })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request (validation error or missing attachments)',
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - Only clients can create jobs',
-  })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'attachment', maxCount: 10 },
-      { name: 'job_photo', maxCount: 1 },
-    ]),
+    FileFieldsInterceptor(
+      [
+        { name: 'job_photo', maxCount: 1 },
+        { name: 'style', maxCount: 1 },
+        { name: 'pdf', maxCount: 1 },
+        { name: 'doc', maxCount: 1 },
+      ],
+      {
+        storage: memoryStorage(),
+        limits: {
+          fileSize: 50 * 1024 * 1024,
+        },
+      },
+    ),
   )
   async createJob(
     @Req() req: any,
     @Body() dto: ClientCreateJobDto,
     @UploadedFiles()
     files: {
-      attachment?: Express.Multer.File[];
       job_photo?: Express.Multer.File[];
+      style?: Express.Multer.File[];
+      pdf?: Express.Multer.File[];
+      doc?: Express.Multer.File[];
     },
   ) {
     const userId = req.user?.userId;
-    if (!userId) throw new BadRequestException('User id not found in request');
-
-    const attachments = files?.attachment ?? [];
-    const jobPhoto = files?.job_photo?.[0];
-
-    if (!attachments.length) {
-      throw new BadRequestException('At least one attachment file is required');
-    }
-
-    return this.jobsService.createJob(userId, dto, attachments, jobPhoto);
+   
+    return this.jobsService.createJob(userId, dto, files );
   }
 
  

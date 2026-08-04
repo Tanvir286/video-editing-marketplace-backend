@@ -36,7 +36,7 @@ export class BidsController {
 
   // my job proposal
   @Get('job')
-  @ApiOperation({ summary: 'Get all job proposal ✧' })
+  @ApiOperation({ summary: 'Get all job proposal' })
   @ApiQuery({
     name: 'status',
     required: false,
@@ -58,7 +58,7 @@ export class BidsController {
 
   // create a new bid
   @Post(':jobId/create')
-  @ApiOperation({ summary: 'Create a bid for a job ✧' })
+  @ApiOperation({ summary: 'Create a bid for a job 🔯🔯🔯' })
   @ApiParam({ name: 'jobId', description: 'Job ID to bid on' })
   @ApiBody({
     type: CreateBidDto,
@@ -89,7 +89,7 @@ export class BidsController {
 
   // job list with bid
   @Get('job/:jobId')
-  @ApiOperation({ summary: 'Get all bids placed on a specific job' })
+  @ApiOperation({ summary: 'Get all bids placed on a specific job 🔯🔯🔯' })
   @ApiParam({ name: 'jobId', description: 'Job ID to retrieve bids list' })
   @ApiResponse({ status: 200, description: 'Bids list retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Job not found' })
