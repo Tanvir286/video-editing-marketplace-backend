@@ -235,18 +235,28 @@ export class BidService {
 
     const updatedBid = await this.prisma.$transaction(async (tx) => {
      
-      const result = await tx.bid.update({
+      const result = await tx.bid.update({ 
         where: { id: bidId },
         data: { status },
       });
 
       if (status === BidStatus.ACCEPTED && bid.jobId) {
+        const bidAmount = result.amount ?? 0;
+        const deliveryDays = result.req_date ?? 0;
+        const jobEndDate = new Date();
+
+        jobEndDate.setDate(jobEndDate.getDate() + deliveryDays);
+
         await tx.jOB.update({
           where: {
             id: bid.jobId,
           },
           data: {
-            job_status: 'IN_PROGRESS',
+            job_total_payment: Math.round(bidAmount * 1.2 * 100) / 100,
+            job_status: BidStatus.IN_PROGRESS,
+            job_startedat: new Date(),
+            job_deadline:result.req_date.toString(),
+            job_end_date: jobEndDate,
           },
         });
 
@@ -259,9 +269,7 @@ export class BidService {
             status: BidStatus.CANCELLED,
           },
         });
-        
       }
-
       return result;
     });
 

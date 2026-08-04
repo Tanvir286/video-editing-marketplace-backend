@@ -81,59 +81,59 @@ async processRequest(
     requestId: string,
     status: ExtensionStatus,
   ) {
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Fetch request and check if current user is the job creator (Client)
-      const request = await tx.extensionRequest.findUnique({
-        where: { id: requestId },
-        include: { 
-          job: {
-            include: {
-              bids: { where: { status: 'IN_PROGRESS' } } 
-            }
-          } 
-        },
-      });
+    // return this.prisma.$transaction(async (tx) => {
+    //   // 1. Fetch request and check if current user is the job creator (Client)
+    //   const request = await tx.extensionRequest.findUnique({
+    //     where: { id: requestId },
+    //     include: { 
+    //       job: {
+    //         include: {
+    //           bids: { where: { status: 'IN_PROGRESS' } } 
+    //         }
+    //       } 
+    //     },
+    //   });
 
-      if (!request) throw new NotFoundException('Extension request not found');
+    //   if (!request) throw new NotFoundException('Extension request not found');
 
-      // 2. Validate Ownership: request.job table theke user_id match korano
-      // Logic: Sudhu matro Job creator e action nite parbe
-      if (request.job.user_id !== user_id) {
-        throw new ForbiddenException('You are not authorized to process this request');
-      }
+    //   // 2. Validate Ownership: request.job table theke user_id match korano
+    //   // Logic: Sudhu matro Job creator e action nite parbe
+    //   if (request.job.user_id !== user_id) {
+    //     throw new ForbiddenException('You are not authorized to process this request');
+    //   }
 
-      // 3. Action Logic
-      if (status === 'APPROVED') {
-        // A. Update Job Deadline
-        const new_deadline = new Date(request.original_date);
-        new_deadline.setDate(new_deadline.getDate() + request.extension_days);
+    //   // 3. Action Logic
+    //   if (status === 'APPROVED') {
+    //     // A. Update Job Deadline
+    //     const new_deadline = new Date(request.original_date);
+    //     new_deadline.setDate(new_deadline.getDate() + request.extension_days);
 
-        await tx.jOB.update({
-          where: { id: request.job_id },
-          data: { job_deadline: new_deadline },
-        });
+    //     await tx.jOB.update({
+    //       where: { id: request.job_id },
+    //       data: { job_deadline: new_deadline },
+    //     });
 
-        // B. Update Bid Duration (req_date)
-        const assigned_bid = request.job.bids[0];
-        if (assigned_bid) {
-          await tx.bid.update({
-            where: { id: assigned_bid.id },
-            data: { req_date: assigned_bid.req_date + request.extension_days }
-          });
-        }
-      }
+    //     // B. Update Bid Duration (req_date)
+    //     const assigned_bid = request.job.bids[0];
+    //     if (assigned_bid) {
+    //       await tx.bid.update({
+    //         where: { id: assigned_bid.id },
+    //         data: { req_date: assigned_bid.req_date + request.extension_days }
+    //       });
+    //     }
+    //   }
 
-      // 4. Final status update
-      const result = await tx.extensionRequest.update({
-        where: { id: requestId },
-        data: { status },
-      });
+    //   // 4. Final status update
+    //   const result = await tx.extensionRequest.update({
+    //     where: { id: requestId },
+    //     data: { status },
+    //   });
 
-      return {
-        success: true,
-        message: `Extension request ${status.toLowerCase()} successfully`,
-        data: result,
-      };
-    });
+    //   return {
+    //     success: true,
+    //     message: `Extension request ${status.toLowerCase()} successfully`,
+    //     data: result,
+    //   };
+    // });
   }
 }

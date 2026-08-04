@@ -51,7 +51,6 @@ export class JobsService {
       this.prisma.hire.findMany({
         where: {
           user_id: userId,
-          ...(statusFilter ? { status: statusFilter as any } : {}),
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -60,7 +59,7 @@ export class JobsService {
         where: {
           user_id: userId,
           bids: { some: { status: BidStatus.ACCEPTED } },
-          ...(statusFilter ? { status: statusFilter } : {}),
+          ...(statusFilter ? { job_status: statusFilter } : {}),
         },
         select: {
           id: true,
@@ -200,8 +199,6 @@ export class JobsService {
       data.job_doc = docFileName;
     }
 
-    const jobTotalPayment = Math.round(dto.job_budget * 1.2 * 100) / 100;
-
     const newJob = await this.prisma.jOB.create({
       data: {
         job_title: dto.job_title,
@@ -213,7 +210,6 @@ export class JobsService {
         job_duration: dto.job_duration,
         job_content_length: dto.job_content_length,
         job_platform: dto.job_platform,
-        job_total_payment: jobTotalPayment,
         job_style_reference: data.job_style,
         job_pdf: data.job_pdf,
         job_documentation: data.job_doc,
