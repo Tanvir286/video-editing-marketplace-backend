@@ -288,6 +288,8 @@ model JOB {
   
   job_startedat       DateTime?
   job_deadline         DateTime?
+  job_end_date         DateTime?
+  job_completed_date    DateTime?
   
   bids              Bid[]
   deliveries        JobDelivery[]

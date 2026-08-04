@@ -13,6 +13,7 @@ import { BidStatus } from 'prisma/generated';
 import { ImageGetUtil } from 'src/common/utils/image/image.util';
 import { PaginationDto } from 'src/common/pagination/pagination.dto';
 import { BidPaginationDto } from './dto/pagination-bid.dto';
+import { JobStatus } from 'prisma/generated';
 
 @Injectable()
 export class BidsService {
@@ -104,11 +105,17 @@ export class BidsService {
 
       const job = await this.prisma.jOB.findUnique({
         where: { id: jobId },
-        select: { id: true },
+        select: { id: true, job_status: true },
       });
 
       if (!job) {
         throw new NotFoundException('Job not found with the provided jobId.');
+      }
+
+      if (job.job_status !== JobStatus.PENDING) {
+        throw new BadRequestException(
+          'You can only place a bid on jobs that are still pending.',
+        );
       }
 
       const existingBid = await this.prisma.bid.findFirst({

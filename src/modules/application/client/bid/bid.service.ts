@@ -3,6 +3,7 @@ import { ImageGetUtil } from 'src/common/utils/image/image.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BidClientPaginationDto } from './dto/bid-pagination.dto';
 import { PaginationDto } from 'src/common/pagination/pagination.dto';
+import { BidStatus } from 'prisma/generated';
 
 @Injectable()
 export class BidService {
@@ -101,7 +102,7 @@ export class BidService {
   }
 
 
-   /*------------------------------------------
+  /*------------------------------------------
            Job ID with proposal list
   ------------------------------------------*/
   async getJobProposalbyId(
@@ -201,6 +202,75 @@ export class BidService {
     };
   }
    
+
+  /*------------------------------------------
+           Update proposal status for a specific bid
+  ------------------------------------------*/
+
+  async updateProposalStatus(
+    bidId: string,
+    userId: string,
+    status: BidStatus,
+  ) {
+    
+    const bid = await this.prisma.bid.findFirst({
+      where: {
+        id: bidId,
+        job: {
+          user_id: userId,
+        },
+      },
+      select: {
+        id: true,
+        jobId: true,
+      },
+    });
+
+    if (!bid) {
+      return {
+        success: false,
+        message: 'Bid not found or you are not authorized to update this bid',
+      };
+    }
+
+    const updatedBid = await this.prisma.$transaction(async (tx) => {
+     
+      const result = await tx.bid.update({
+        where: { id: bidId },
+        data: { status },
+      });
+
+      if (status === BidStatus.ACCEPTED && bid.jobId) {
+        await tx.jOB.update({
+          where: {
+            id: bid.jobId,
+          },
+          data: {
+            job_status: 'IN_PROGRESS',
+          },
+        });
+
+        await tx.bid.updateMany({
+          where: {
+            jobId: bid.jobId,
+            id: { not: bidId },
+          },
+          data: {
+            status: BidStatus.CANCELLED,
+          },
+        });
+        
+      }
+
+      return result;
+    });
+
+    return {
+      success: true,
+      message: 'Bid status updated successfully',
+      data: updatedBid,
+    };
+  }
 
 
 

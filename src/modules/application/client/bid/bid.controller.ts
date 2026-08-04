@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Query, Req, UseGuards } from '@nestjs/common';
 import { BidService } from './bid.service';
 import {
   ApiBearerAuth,
@@ -12,6 +12,7 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { USER_TYPES } from 'src/common/swagger/swagger-auth';
 import { BidClientPaginationDto } from './dto/bid-pagination.dto';
 import { PaginationDto } from 'src/common/pagination/pagination.dto';
+import { BidStatus } from 'prisma/generated';
 
 @ApiTags('🏴 Client Bids')
 @ApiBearerAuth(USER_TYPES.CLIENT)
@@ -61,7 +62,38 @@ export class BidController {
   ) {
     const userId = req.user.userId;
     return this.bidService.getJobProposalbyId(paginationDto, userId, jobId);
+  } 
+
+  /*--------------------------------------------------
+          Apprpove bid proposal for a specific job
+  --------------------------------------------------*/
+  @Patch('proposal/:bidId')
+  @ApiOperation({
+    summary: 'Update proposal status for a specific bid',
+    description: 'Allows the client to update the status of a specific bid.',
+  })
+  @ApiParam({
+    name: 'bidId',
+    required: true,
+    description: 'Bid ID for which the status needs to be updated',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: true,
+    enum: BidStatus,
+    description: 'New status for the bid (e.g., ACCEPTED, REJECTED)',
+  })
+  async updateProposalStatus(
+    @Req() req: any,
+    @Param('bidId') bidId: string,
+    @Query('status') status: BidStatus,
+  ) {
+    const userId = req.user.userId;
+    return this.bidService.updateProposalStatus(bidId, userId, status);
   }
+            
+   
+
 
 
 
