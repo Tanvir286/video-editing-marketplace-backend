@@ -90,6 +90,7 @@ export default () => ({
     // chat
     attachment: 'attachment/',
     jobPhoto: 'job-photo/',
+    extension: 'extension/',
   },
 
   defaultUser: {

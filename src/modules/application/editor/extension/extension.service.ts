@@ -4,7 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BidStatus, ExtensionStatus, JobStatus } from 'prisma/generated';
+import { BidStatus, JobStatus } from 'prisma/generated';
+import { StringHelper } from 'src/common/helper/string.helper';
+import { SojebStorage } from 'src/common/lib/Disk/SojebStorage';
+import appConfig from 'src/config/app.config';
 import { CreateExtensionDto } from 'src/modules/application/editor/extension/dto/create-extension.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -12,65 +15,99 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ExtensionService {
   constructor(private prisma: PrismaService) {}
 
-  async createRequest(userId: string, jobId: string, dto: CreateExtensionDto) {
-    // const job = await this.prisma.jOB.findUnique({
-    //   where: { id: jobId },
-    //   include: {
-    //     bids: {
-    //       where: {
-    //         user_id: userId,
-    //         status: BidStatus.ACCEPTED,
-    //       },
-    //     },
-    //     user: {
-    //       select: { type: true },
-    //     },
-    //   },
-    // });
-
-    // if (!job) {
-    //   throw new NotFoundException('Job not found');
-    // }
-
-    // // 3. Status Check: Job must be IN_PROGRESS
-    // if (job.job_status !== JobStatus.IN_PROGRESS) {
-    //   throw new BadRequestException(
-    //     'Extensions can only be requested for jobs currently in progress',
-    //   );
-    // }
-
-    // // User check (Assuming req.user logic)
-    // const requester = await this.prisma.user.findUnique({
-    //   where: { id: userId },
-    // });
-
-    // if (!requester) {
-    //   throw new NotFoundException('Requester not found');
-    // }
-
-    // if (requester.type !== 'EDITOR') {
-    //   throw new ForbiddenException(
-    //     'Only Editors are allowed to request time extensions',
-    //   );
-    // }
-
-    // // 5. Create Extension Request
-    // const result = await this.prisma.extensionRequest.create({
-    //   data: {
-    //     job_id: jobId,
-    //     message: dto.message,
-    //     extension_days: dto.extension_days,
-    //     original_date: job.job_deadline,
-    //     user_id: userId,
-    //   },
-    // });
-
-    // return {
-    //   success: true,
-    //   message: 'Extension request created successfully',
-    //   data: result,
-    // };
-  }
-
+  async createRequest(
+    userId: string,
+    jobId: string,
+    dto: CreateExtensionDto,
+    extensionFile?: Express.Multer.File,
+  ) {
   
+    const data: any = {} 
+
+    const requester = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, type: true },
+    });
+
+    if (!requester) {
+      throw new NotFoundException('Requester not found');
+    }
+
+    if (requester.type !== 'EDITOR') {
+      throw new ForbiddenException(
+        'Only Editors are allowed to request time extensions',
+      );
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const job = await tx.jOB.findUnique({
+        where: { id: jobId },
+        include: {
+          bids: {
+            where: {
+              user_id: userId,
+              status: BidStatus.ACCEPTED,
+            },
+          },
+        },
+      });
+
+      if (!job) {
+        throw new NotFoundException('Job not found');
+      }
+
+      if (!job.bids.length) {
+        throw new BadRequestException(
+          'Only the editor with the accepted bid can request an extension for this job',
+        );
+      }
+
+      if (job.job_status !== JobStatus.IN_PROGRESS) {
+        throw new BadRequestException(
+          'Extensions can only be requested for jobs currently in progress',
+        );
+      }
+
+      if (!job.job_end_date) {
+        throw new BadRequestException('Job end date is missing');
+      }
+
+      const originalDate = new Date(job.job_end_date);
+      if (Number.isNaN(originalDate.getTime())) {
+        throw new BadRequestException('Job end date is invalid');
+      }
+
+      const extensionNumber = (await tx.extensionRequest.count({ where: { job_id: jobId } })) + 1;
+
+    
+      if (extensionFile) {
+        const extensionFileName = `${StringHelper.randomString(10)}_${extensionFile.originalname}`;
+
+        await SojebStorage.put(
+          `${appConfig().storageUrl.extension}/${extensionFileName}`,
+          extensionFile.buffer,
+        );
+        data.attachmentment_file = extensionFileName;
+      }
+
+      const result = await tx.extensionRequest.create({
+        data: {
+          job_id: jobId,
+          extension_number: extensionNumber,
+          message: dto.message,
+          extension_days: dto.extension_days,
+          original_date: originalDate,
+          requester_id: userId,
+          reviewer_id: job.user_id,
+          attachmentment_file: data.attachmentment_file,
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Extension request created successfully',
+        data: result,
+      };
+    });
+  }
 }
