@@ -360,7 +360,6 @@ model Hire {
 
   hire_profile_id String
   status          HireStatus @default(PENDING)
-
   software_preference SoftwarePreference[]
   attachments         Attachment[]
 

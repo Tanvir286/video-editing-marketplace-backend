@@ -82,6 +82,9 @@ export class ExtensionService {
         throw new BadRequestException('Job end date is invalid');
       }
 
+      const newDate = new Date(originalDate);
+      newDate.setDate(newDate.getDate() + Number(dto.extension_days));
+
       const extensionNumber = (await tx.extensionRequest.count({ where: { job_id: jobId } })) + 1;
 
     
@@ -102,6 +105,7 @@ export class ExtensionService {
           message: dto.message,
           extension_days: dto.extension_days,
           original_date: originalDate,
+          new_date: newDate,
           requester_id: userId,
           reviewer_id: job.user_id,
           attachmentment_file: data.attachmentment_file,
@@ -161,21 +165,36 @@ export class ExtensionService {
         },
       });
 
-      const formattedRequests = requests.map((item) => ({
-        id: item.id,
-        created_at: item.created_at,
-        job_id: item.job_id,
-        extension_number: item.extension_number,
-        message: item.message,
-        extension_days: item.extension_days,
-        original_date: item.original_date,
-        status: item.status,
-        attachmentment_file_url: item.attachmentment_file
-          ? SojebStorage.url(
-              `${appConfig().storageUrl.extension}/${item.attachmentment_file}`,
-            )
-          : null,
-      }));
+      const formattedRequests = requests.map((item) => {
+        const currentDeliveryDate = item.original_date || item.job?.job_end_date;
+        let calculatedNewDate = item.new_date;
+
+        if (!calculatedNewDate && currentDeliveryDate) {
+          const d = new Date(currentDeliveryDate);
+          d.setDate(d.getDate() + item.extension_days);
+          calculatedNewDate = d;
+        }
+
+        return {
+          id: item.id,
+          created_at: item.created_at,
+          job_id: item.job_id,
+          extension_number: item.extension_number,
+          message: item.message,
+          extension_days: item.extension_days,
+          original_date: item.original_date,
+          new_date: calculatedNewDate,
+          current_delivery_date: currentDeliveryDate,
+          new_delivery_date: calculatedNewDate,
+          status: item.status,
+          attachmentment_file_url: item.attachmentment_file
+            ? SojebStorage.url(
+                `${appConfig().storageUrl.extension}/${item.attachmentment_file}`,
+              )
+            : null,
+          job: item.job,
+        };
+      });
 
       return {
         success: true,
