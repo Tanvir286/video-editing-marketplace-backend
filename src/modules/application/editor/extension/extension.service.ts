@@ -15,6 +15,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ExtensionService {
   constructor(private prisma: PrismaService) {}
 
+
+  /*------------------------------------------
+           Create Extension Request
+  ------------------------------------------*/
+
   async createRequest(
     userId: string,
     jobId: string,
@@ -107,6 +112,75 @@ export class ExtensionService {
         success: true,
         message: 'Extension request created successfully',
         data: result,
+      };
+    });
+  }
+
+
+  /*------------------------------------------
+           get my extension request list
+  ------------------------------------------*/
+  async getMyRequests(userId: string) {
+ 
+    const requester = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, type: true },
+    });
+
+    if (!requester) {
+      throw new NotFoundException('Requester not found');
+    }
+
+    if (requester.type !== 'EDITOR') {
+      throw new ForbiddenException(
+        'Only Editors are allowed to request time extensions',
+      );
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const requests = await tx.extensionRequest.findMany({
+        where: { requester_id: userId },
+        orderBy: { created_at: 'desc' },
+        include: {
+          job: {
+            select: {
+              id: true,
+              job_title: true,
+              job_photo: true,
+              job_end_date: true,
+              job_status: true,
+            },
+          },
+          reviewer: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+      });
+
+      const formattedRequests = requests.map((item) => ({
+        id: item.id,
+        created_at: item.created_at,
+        job_id: item.job_id,
+        extension_number: item.extension_number,
+        message: item.message,
+        extension_days: item.extension_days,
+        original_date: item.original_date,
+        status: item.status,
+        attachmentment_file_url: item.attachmentment_file
+          ? SojebStorage.url(
+              `${appConfig().storageUrl.extension}/${item.attachmentment_file}`,
+            )
+          : null,
+      }));
+
+      return {
+        success: true,
+        message: 'Extension requests fetched successfully',
+        data: formattedRequests,
       };
     });
   }

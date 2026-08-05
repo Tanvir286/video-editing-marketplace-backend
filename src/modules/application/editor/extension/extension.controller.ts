@@ -101,6 +101,19 @@ export class ExtensionController {
   /*------------------------------------------
            my Extension Request list
   ------------------------------------------*/
+  @Get('my-requests')
+  @ApiOperation({
+    summary: 'Get my extension requests',
+    description: 'Allows an editor to view all extension requests they have created.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Extension requests fetched successfully',
+  })
+  async getMyRequests(@Req() req: any) {
+    const user_id = req.user?.userId;
+    return this.extensionService.getMyRequests(user_id);
+  }
   
   
 }
