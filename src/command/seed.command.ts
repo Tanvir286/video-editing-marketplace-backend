@@ -179,7 +179,7 @@ export class SeedCommand extends CommandRunner {
 
       await this.prisma.extensionRequest.deleteMany({
         where: {
-          user_id: { in: seededUserIds },
+          requester_id: { in: seededUserIds },
         },
       });
 

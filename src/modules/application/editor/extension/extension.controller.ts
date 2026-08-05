@@ -15,8 +15,9 @@ import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { USER_TYPES } from 'src/common/swagger/swagger-auth';
+import { ExtensionStatus } from 'prisma/generated';
 
-@ApiExcludeController()
+
 @ApiTags('Editor Extension')
 @ApiBearerAuth(USER_TYPES.EDITOR)
 @Controller('extension')
@@ -38,13 +39,5 @@ export class ExtensionController {
     );
   }
 
-  @Patch(':requestId/action')
-  async handleAction(
-    @Req() req: any,
-    @Param('requestId') requestId: string,
-    @Body('status') status: 'APPROVED' | 'REJECTED',
-  ) {
-    const user_id = req.user?.userId;
-    return this.extensionService.processRequest(user_id, requestId, status);
-  }
+  
 }

@@ -110,8 +110,9 @@ model User {
   jobs                 JOB[]
   bids                 Bid[]
   hires                Hire[]
-  extensionRequests    ExtensionRequest[]
   deliveries           JobDelivery[]
+  extensionRequests    ExtensionRequest[] @relation("ExtensionRequester")
+  extensionReviews     ExtensionRequest[] @relation("ExtensionReviewer")
   reviews              Review[]             @relation("reviewsGiven")
   reviewsReceived      Review[]             @relation("serviceProviderReviews")
 
@@ -435,23 +436,38 @@ enum ExtensionStatus {
 
 model ExtensionRequest {
   id      String @id @default(uuid())
-  job_id  String
-  user_id String
-
-  message        String @db.VarChar(300)
-  extension_days Int
-
-  original_date DateTime
-
-  new_date DateTime?
-
-  status ExtensionStatus @default(PENDING)
-
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  
+  extension_number Int
+  message        String @db.VarChar(300)
+  attachmentment_file String?
+  extension_days Int
+  status ExtensionStatus @default(PENDING)
 
+  
+  original_date DateTime
+  new_date DateTime?
+  
+  // Relations
+  job_id  String
   job  JOB?  @relation(fields: [job_id], references: [id])
-  user User? @relation(fields: [user_id], references: [id])
+
+  //Editor who requested the extension
+  requester_id String
+  requester    User @relation("ExtensionRequester", fields: [requester_id], references: [id])
+
+  /// Client who approved/rejected the request
+  reviewer_id String?
+  reviewer    User? @relation("ExtensionReviewer", fields: [reviewer_id], references: [id])
+
+  @@unique([job_id, extension_number])
+
+  @@index([job_id])
+  @@index([requester_id])
+  @@index([reviewer_id])
+  @@index([status])
+
 
   @@map("extension_requests")
 }
