@@ -125,6 +125,7 @@ export class ExtensionService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+
       const extensionRequest = await tx.extensionRequest.findUnique({
         where: { id: extensionId },
         include: {
@@ -184,6 +185,8 @@ export class ExtensionService {
           },
         });
       }
+
+      console.log('hi', status)
 
       return {
         success: true,

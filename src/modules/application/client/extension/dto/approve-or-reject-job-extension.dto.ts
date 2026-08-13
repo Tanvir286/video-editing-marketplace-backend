@@ -15,3 +15,11 @@ export class ApproveOrRejectJobExtensionDto {
   })
   status: ExtensionStatus;
 }
+
+
+
+interface Reson {
+  extension_id: string;
+  message: string;
+}
+
