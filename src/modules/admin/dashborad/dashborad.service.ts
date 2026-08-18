@@ -17,7 +17,7 @@ export class DashboradService {
   /*-----------------------------------------------------
       Total Editor & Total Client Stats API
   ------------------------------------------------------*/
-  async getDashboardStats() {
+  async getDashboardStatus() {
     try {
       const now = new Date();
 
@@ -420,8 +420,7 @@ export class DashboradService {
 
         // Projects counts
         const totalProjects = totalJobs + totalHires;
-        const totalCompletedProjects =
-          completedJobsCount + completedHiresCount;
+        const totalCompletedProjects = completedJobsCount + completedHiresCount;
 
         // Total spent calculation
         let totalSpent = 0;
@@ -498,5 +497,19 @@ export class DashboradService {
       };
     }
   }
-}
 
+
+  // get job statistics
+  async getJobStatus() {
+    try {
+      
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+
+}
