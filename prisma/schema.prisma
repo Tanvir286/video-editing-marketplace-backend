@@ -70,12 +70,10 @@ model User {
   type              UserType? @default(CLIENT)
   email_verified_at DateTime?
 
-  //-----(relation_part---------
   protfolios protfolio[]
   educations Education[]
   skills     skills[]
 
-  //----------------------------------------
   first_name    String?   @db.VarChar(255)
   last_name     String?   @db.VarChar(255)
   domain        String?   @unique
@@ -95,7 +93,6 @@ model User {
   two_factor_secret     String?
   accounts              Account[]
 
-  // --- Conversation & Messaging ---
   participants Participant[] @relation("participantUser")
 
   receiver_notifications Notification[] @relation("receiver")
@@ -282,7 +279,6 @@ model JOB {
   job_total_payment    Float?
   job_status           JobStatus     @default(PENDING)
 
-  // attachment and reference files
   job_style_reference String?
   job_pdf              String?
   job_documentation     String?
@@ -466,8 +462,6 @@ model ExtensionRequest {
   @@index([requester_id])
   @@index([reviewer_id])
   @@index([status])
-
-
   @@map("extension_requests")
 }
 
