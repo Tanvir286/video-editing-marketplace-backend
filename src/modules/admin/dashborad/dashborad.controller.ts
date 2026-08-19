@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import { DashboradService } from './dashborad.service';
 import {
   ApiBearerAuth,
@@ -154,43 +154,13 @@ export class DashboradController {
     return await this.dashboradService.getTopClients(paginationDto);
   }
 
-  /*-----------------------------------------------------
+/*-----------------------------------------------------
                 Job Statistics API
 ------------------------------------------------------*/
-@Get('job-stats')
-@ApiOperation({
-  summary: 'Get Job Statistics',
-  description:
-    'Returns statistics about job listings including total jobs, pending jobs, in-progress jobs, completed jobs, and average job duration.',
-})
-@ApiOkResponse({
-  description: 'Job statistics retrieved successfully',
-  schema: {
-    example: {
-      success: true,
-      message: 'Job statistics retrieved successfully',
-      data: {
-        total_jobs: 150,
-        pending_jobs: 10,
-        in_progress_jobs: 20,
-        completed_jobs: 120,
-        cancelled_jobs: 0,
-        average_job_duration_days: 7,
-        growth: {
-          pending: 5,
-          in_progress: 10,
-          completed: 15,
-          cancelled: 0,
-        },
-      },
-    },
-  },
-})
-async getJobStats() {
-  return await this.dashboradService.getJobStatus();
-}
 
-  
+
+
+
 
 
 

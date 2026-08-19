@@ -499,17 +499,9 @@ export class DashboradService {
   }
 
 
-  // get job statistics
-  async getJobStatus() {
-    try {
-      
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
+  
+
+
 
 
 }
