@@ -119,7 +119,7 @@ export class ExtensionService {
 
     if (
       status !== ExtensionStatus.APPROVED &&
-      status !== ExtensionStatus.REJECTED
+   status !== ExtensionStatus.REJECTED
     ) {
       throw new BadRequestException('Status must be APPROVED or REJECTED');
     }
