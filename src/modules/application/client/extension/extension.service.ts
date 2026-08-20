@@ -166,6 +166,7 @@ export class ExtensionService {
         }
       }
 
+     
       const updatedRequest = await tx.extensionRequest.update({
         where: { id: extensionId },
         data: {
@@ -186,8 +187,7 @@ export class ExtensionService {
         });
       }
 
-      console.log('hi', status)
-
+  
       return {
         success: true,
         message: `Extension request ${status.toLowerCase()} successfully`,

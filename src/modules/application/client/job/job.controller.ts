@@ -184,7 +184,6 @@ export class JobsController {
     },
   ) {
     const userId = req.user?.userId;
-   
     return this.jobsService.createJob(userId, dto, files );
   }
 
