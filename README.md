@@ -78,25 +78,7 @@ The platform operates on a three-tier role ecosystem:
 
 ---
 
-## Config
 
-Stripe webhook:
-
-```
-http://{domain_name}/api/payment/stripe/webhook
-```
-
-for development run stripe cli:
-
-```
-stripe listen --forward-to localhost:4000/api/payment/stripe/webhook
-```
-
-trigger a event for testing:
-
-```
-stripe trigger payment_intent.succeeded
-```
 
 ## Installation
 
@@ -120,6 +102,26 @@ Seed dummy data to database
 
 ```
 yarn cmd seed
+```
+
+## Stripe Config
+
+Stripe webhook:
+
+```
+http://{domain_name}/api/payment/stripe/webhook
+```
+
+for development run stripe cli:
+
+```
+stripe listen --forward-to localhost:4000/api/payment/stripe/webhook
+```
+
+trigger a event for testing:
+
+```
+stripe trigger payment_intent.succeeded
 ```
 
 ## Running:
